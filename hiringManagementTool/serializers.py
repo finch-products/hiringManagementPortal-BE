@@ -22,7 +22,7 @@ class LOBMasterSerializer(serializers.ModelSerializer):
 class LocationMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocationMaster
-        fields = '__all__'
+        fields = '__all__' 
 
 # Practice Unit Master Serializer
 class PracticeUnitMasterSerializer(serializers.ModelSerializer):
