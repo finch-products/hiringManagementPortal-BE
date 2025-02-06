@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-oz-^h8mnv)l+4b=uk9_t_3a9-ogsz%1@r%+!ov@#0sr!3u5*td
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["http://localhost:4200", "http://64.227.145.117"]
 
 
 # Application definition
@@ -82,8 +82,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'hiringtool',
         'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',  # Changpe to MySQL server IP if remote
+        'PASSWORD': 'Finch@25',
+        'HOST': '64.227.145.117',  # Changpe to MySQL server IP if remote
         'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
