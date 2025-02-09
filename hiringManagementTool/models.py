@@ -23,6 +23,10 @@ class EmployeeMaster(models.Model):
     def __str__(self):
         return self.emp_name
     
+    class Meta:
+        managed = True
+        db_table = 'employeemaster'
+    
 class ClientMaster(models.Model):
     # Fields based on the "clientmaster" table definition and FE fields.
     clm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto Increment)")
@@ -41,6 +45,10 @@ class ClientMaster(models.Model):
     
     def _str_(self):
         return f"{self.clm_name} ({self.clm_clientId})"
+    
+    class Meta:
+        managed = True
+        db_table = 'clientmaster'
 
 
 class ClientManagerMaster(models.Model):
@@ -76,6 +84,10 @@ class ClientManagerMaster(models.Model):
 
     def __str__(self):
         return f"{self.cmm_name} ({self.cmm_email})"
+    
+    class Meta:
+        managed = True
+        db_table = 'clientmanagermaster'
 
 class LocationMaster(models.Model):
     lcm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Location Manager)")
@@ -101,6 +113,11 @@ class LocationMaster(models.Model):
 
     def __str__(self):
         return f"{self.lcm_name} ({self.lcm_state}, {self.lcm_country})"
+    
+     
+    class Meta:
+        managed = True
+        db_table = 'locationmaster'
 
 class LOBMaster(models.Model):
     lob_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for LOB)")
@@ -147,65 +164,66 @@ class LOBMaster(models.Model):
 
     def __str__(self):
         return self.lob_name
+    
+    class Meta:
+        managed = True
+        db_table = 'lobmaster'
 
 
-class SubUnitMaster(models.Model):
-    sum_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-incremented for Sub Unit)")
-    sum_unitname = models.CharField(max_length=50, help_text="Name of the Sub Unit")
-    sum_unitsales = models.CharField(max_length=50, help_text="Sales associated with the Sub Unit")
-    sum_unitdelivery = models.CharField(max_length=50, help_text="Delivery associated with the Sub Unit")
-    sum_unitsolution = models.CharField(max_length=50, help_text="Solution associated with the Sub Unit")
+class InternalDepartmentMaster(models.Model):
+    idm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-incremented for Internal Department Master)")
+    idm_unitname = models.CharField(max_length=50, help_text="Name of the Internal Department Name")
+    idm_unitsales = models.CharField(max_length=50, help_text="Sales associated with the Internal Department")
+    idm_unitdelivery = models.CharField(max_length=50, help_text="Delivery associated with the Internal Department")
+    idm_unitsolution = models.CharField(max_length=50, help_text="Solution associated with the Internal Department")
 
-    sum_spoc = models.ForeignKey(
+    idm_spoc_id = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        related_name="subunit_spoc",
+        related_name="employee_master",
         help_text="Single Point of Contact (SPOC) from Employee Master"
     )
 
-    sum_sbu_id = models.ForeignKey(
-        'StrategicBusinessUnitMaster', 
-        on_delete=models.CASCADE, 
-        related_name="subunits",
-        help_text="Strategic Business Unit (SBU) associated with the Sub Unit"
-    )
-
-    sum_deliverymanager = models.ForeignKey(
+    idm_deliverymanager_id = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        related_name="subunit_delivery_manager",
+        related_name="internaldepartment_delivery_manager",
         help_text="Delivery Manager from Employee Master"
     )
 
-    sum_isaative = models.BooleanField(default=True, help_text="Indicates if the Sub Unit is currently active")
+    idm_isactive = models.BooleanField(default=True, help_text="Indicates if the Internal Department is currently active")
 
-    sum_insertdate = models.DateTimeField(default=now, help_text="Timestamp when the Sub Unit record was created")
-    sum_updatedate = models.DateTimeField(default=now, help_text="Timestamp when the Sub Unit record was last updated")
+    idm_insertdate = models.DateTimeField(default=now, help_text="Timestamp when the Internal Department record was created")
+    idm_updatedate = models.DateTimeField(default=now, help_text="Timestamp when the Internal Department record was last updated")
 
-    sum_insertby = models.ForeignKey(
+    idm_insertby = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        related_name="subunit_inserted_records",
+        related_name="internaldepartment_inserted_records",
         help_text="Reference to the employee who inserted this record"
     )
 
-    sum_updateby = models.ForeignKey(
+    idm_updateby = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        related_name="subunit_updated_records",
+        related_name="internaldepartment_updated_records",
         help_text="Reference to the employee who last updated this record"
     )
 
     def __str__(self):
         return self.sum_unitName
+    
+    class Meta:
+        managed = True
+        db_table = 'internaldepartmentmaster'
 
 # ============================
 # Demand Table Model
@@ -216,21 +234,21 @@ class OpenDemand(models.Model):
     dem_ctoolnumber = models.CharField(max_length=50, help_text="Client Tool Number from Client")
     dem_ctooldate = models.DateTimeField(help_text="Requirement/Demand Date from Client")
 
-    dem_cmm = models.ForeignKey(
+    dem_cmm_id = models.ForeignKey(
         'ClientManagerMaster',
         on_delete=models.CASCADE,
         related_name="demands",
         help_text="Reference to Client Manager"
     )
 
-    dem_clm = models.ForeignKey(
+    dem_clm_id = models.ForeignKey(
         'ClientMaster',
         on_delete=models.CASCADE,
         related_name="client_demands",
         help_text="Reference to Client Master Table"
     )
 
-    dem_lcm = models.ForeignKey(
+    dem_lcm_id = models.ForeignKey(
         'LocationMaster',
         on_delete=models.SET_NULL,
         null=True,
@@ -241,7 +259,7 @@ class OpenDemand(models.Model):
     dem_validtill = models.DateTimeField(help_text="Requirement/Demand Closing Date")
     dem_skillset = models.TextField(help_text="Multiple skillsets separated by commas")
 
-    dem_lob = models.ForeignKey(
+    dem_lob_id = models.ForeignKey(
         'LOBMaster',
         on_delete=models.SET_NULL,
         null=True,
@@ -249,20 +267,20 @@ class OpenDemand(models.Model):
         help_text="Reference to LOB Master Table"
     )
 
-    dem_sub = models.ForeignKey(
-        'SubUnitMaster',
+    dem_idm_id = models.ForeignKey(
+        'InternalDepartmentMaster',
         on_delete=models.SET_NULL,
         null=True,
-        related_name="subunit_demands",
-        help_text="Reference to Sub Unit Master Table"
+        related_name="idm_demands",
+        help_text="Reference to Internal Department Master Table"
     )
 
-    dem_dsm = models.ForeignKey(
-        'SubUnitMaster',
+    dem_dsm_id = models.ForeignKey(
+        'DemandStatusMaster',
         on_delete=models.SET_NULL,
         null=True,
         related_name="dsm_demands",
-        help_text="Reference to Sub Unit Master Table"
+        help_text="Reference to Internal Department Master Table"
     )
 
     dem_positions = models.IntegerField(help_text="Number of Positions Required")
@@ -298,11 +316,15 @@ class OpenDemand(models.Model):
     def __str__(self):
         return f"Demand {self.dem_ctoolnumber} - {self.dem_positions} Positions"
     
+    class Meta:
+        managed = True
+        db_table = 'opendemand'
+    
 class DemandStatusMaster(models.Model):
     dsm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Demand Status)")
     dsm_code = models.CharField(max_length=50, unique=True, help_text="Status Name (e.g., Open, JD Received, Rejected, etc.)")
     dsm_description = models.TextField(blank=True, null=True, help_text="Detailed description of the status")
-    dsm_sortId = models.IntegerField(help_text="Sorting order for statuses")
+    dsm_sortid = models.IntegerField(help_text="Sorting order for statuses")
 
     dsm_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
     dsm_insertedby = models.ForeignKey(
@@ -327,6 +349,10 @@ class DemandStatusMaster(models.Model):
     def __str__(self):
         return f"{self.dsm_code} - {'Closed' if self.dsm_isclosed else 'Open'}"
     
+    class Meta:
+        managed = True
+        db_table = 'demandstatusmaster'
+    
 class DemandHistoryTable(models.Model):
     dhs_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Status History)")
     
@@ -339,7 +365,7 @@ class DemandHistoryTable(models.Model):
 
     dhs_dsm_code = models.CharField(max_length=50, help_text="Demand Status Code (from DemandStatusMaster)")
     dhs_dsm_description = models.TextField(blank=True, null=True, help_text="Demand Status Description (from DemandStatusMaster)")
-    dhs_dsm_sortId = models.IntegerField(help_text="Sorting order (from DemandStatusMaster)")
+    dhs_dsm_sortid = models.IntegerField(help_text="Sorting order (from DemandStatusMaster)")
     dhs_dsm_insertdate = models.DateTimeField(help_text="Status insert date (from DemandStatusMaster)")
     dhs_dsm_updateddate = models.DateTimeField(auto_now=True, help_text="Status last updated date & time")
     dhs_dsm_isclosed = models.BooleanField(default=False, help_text="Indicates if status is treated as closed")
@@ -350,10 +376,14 @@ class DemandHistoryTable(models.Model):
 
     def __str__(self):
         return f"History ID: {self.dhs_id} - Status: {self.dhs_dsm_code}"
+    
+    class Meta:
+        managed = True
+        db_table = 'demandhistory'
 
 class CandidateMaster(models.Model):
     cdm_id = models.AutoField(primary_key=True, help_text="Unique Candidate ID (Auto-generated)")
-    cdm_empid = models.IntegerField(null=True, blank=True, help_text="Employee ID for tracking (if internal)")
+    cdm_emp_id = models.IntegerField(null=True, blank=True, help_text="Employee ID for tracking (if internal)")
     cdm_name = models.CharField(max_length=50, help_text="Full name of the candidate")
     cdm_email = models.EmailField(unique=True, help_text="Candidate email (must be unique)")
     cdm_phone = models.CharField(max_length=20, help_text="Candidate phone number")
@@ -362,7 +392,7 @@ class CandidateMaster(models.Model):
     cdm_profile = models.FileField(upload_to="uploads/candidate_profiles/", blank=True, null=True, help_text="Candidate profile file (resume)")
     cdm_description = models.TextField(blank=True, null=True, help_text="Cover letter or profile description")
     
-    cdm_csm = models.ForeignKey(
+    cdm_csm_id = models.ForeignKey(
         'CandidateMaster',
         on_delete=models.SET_NULL,
         null=True,
@@ -399,11 +429,15 @@ class CandidateMaster(models.Model):
     def __str__(self):
         return f"{self.cdm_name} ({'Internal' if self.cdm_isinternal else 'External'})"
     
+    class Meta:
+        managed = True
+        db_table = 'candidatemaster'
+    
 class CandidateStatusMaster(models.Model):
     csm_id = models.AutoField(primary_key=True, help_text="Unique Candidate Status ID (Auto-generated)")
     csm_code = models.CharField(max_length=50, unique=True, help_text="Candidate Status Name (e.g., Open, L1 Interview Scheduled, Selected, Rejected, On Hold, etc.)")
     csm_description = models.TextField(blank=True, null=True, help_text="Detailed description of the status")
-    csm_sortId = models.IntegerField(help_text="Sorting order for statuses")
+    csm_sortid = models.IntegerField(help_text="Sorting order for statuses")
 
     csm_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
     csm_insertedby = models.ForeignKey(
@@ -417,11 +451,15 @@ class CandidateStatusMaster(models.Model):
 
     def __str__(self):
         return f"{self.csm_code} - Status ID: {self.csm_id}"
+    
+    class Meta:
+        managed = True
+        db_table = 'candidatestatusmaster'
 
 class CandidateDemandHistory(models.Model):
     cdh_id = models.AutoField(primary_key=True, help_text="Unique Candidate Demand History ID (Auto-generated)")
 
-    cdh_cdm = models.ForeignKey(
+    cdh_cdm_id = models.ForeignKey(
         'CandidateMaster',
         on_delete=models.CASCADE,
         related_name="demand_history",
@@ -451,6 +489,10 @@ class CandidateDemandHistory(models.Model):
 
     def __str__(self):
         return f"CDH-{self.cdh_id} | Candidate: {self.cdh_cdm.cdm_name} | Demand ID: {self.cdh_dem.dem_id}"
+    
+    class Meta:
+        managed = True
+        db_table = 'candidatedemandhistory'
 
 class CandidateDemandLink(models.Model):
     cdl_id = models.AutoField(primary_key=True, help_text="Unique Candidate Demand Link ID (Auto-generated)")
@@ -484,6 +526,10 @@ class CandidateDemandLink(models.Model):
 
     def __str__(self):
         return f"CDL-{self.cdl_id} | Candidate: {self.cdl_cdm.cdm_name} | Demand ID: {self.cdl_dem.dem_id}"
+    
+    class Meta:
+        managed = True
+        db_table = 'candidatedemandlink'
 
 class RoleMaster(models.Model):
     rlm_id = models.IntegerField(primary_key=True, help_text="Primary Key (Manually assigned for each role type)")
@@ -492,12 +538,10 @@ class RoleMaster(models.Model):
     def __str__(self):
         return self.rlm_name
     
-class StrategicBusinessUnitMaster(models.Model):
-    sbu_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Business Unit)")
-    sbu_name = models.CharField(max_length=50, unique=True, help_text="Business Unit Name")
+    class Meta:
+        managed = True
+        db_table = 'rolemaster'
 
-    def __str__(self):
-        return self.sbu_name
 
     
     

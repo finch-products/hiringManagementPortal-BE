@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'hiringtool',
+        'NAME': 'internalhiringtool',
         'USER': 'root',
         'PASSWORD': 'Finch@25',
         'HOST': '64.227.145.117',  # Changpe to MySQL server IP if remote
