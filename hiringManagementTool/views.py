@@ -1,10 +1,8 @@
 from rest_framework import viewsets
-from .models import ClientMaster, InternalDepartmentMaster, LOBMaster, LocationMaster, OpenDemand, EmployeeMaster, ClientManagerMaster, DemandStatusMaster
-from .serializers import ClientMasterSerializer, ClientManagerMasterSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer, LocationDetailsSerializer, DemandStatusDetailsSerializer, InternalDepartmentDetailsSerializer, LOBDetailSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from .models import ClientMaster
-from .serializers import ClientDetailsSerializer
+from .models import CandidateMaster, ClientMaster, InternalDepartmentMaster, LOBMaster, LocationMaster, OpenDemand, EmployeeMaster, ClientManagerMaster, RoleMaster, DemandStatusMaster
+from .serializers import CandidateMasterSerializer, ClientMasterSerializer, ClientManagerMasterSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer, RoleMasterSerializer,  LocationDetailsSerializer, DemandStatusDetailsSerializer, InternalDepartmentDetailsSerializer, LOBDetailSerializer, ClientDetailsSerializer
 
 class OpenDemandViewSet(viewsets.ModelViewSet):
     queryset = OpenDemand.objects.all()
@@ -96,3 +94,11 @@ class LOBDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     """API View to fetch LOB details with client partner & delivery manager."""
     queryset = LOBMaster.objects.all()
     serializer_class = LOBDetailSerializer
+    
+class CandidateMasterViewSet(viewsets.ModelViewSet):
+    queryset = CandidateMaster.objects.all()
+    serializer_class = CandidateMasterSerializer
+    
+class RoleMasterViewSet(viewsets.ModelViewSet):
+    queryset = RoleMaster.objects.all()
+    serializer_class = RoleMasterSerializer
