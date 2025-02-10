@@ -1,0 +1,24 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+
+# Ignore virtual environments
+venv/
+*/__pycache__/*
+*.pyc
+__pycache__/
+*.pyc
+logs/*
+
+# Ignore virtual environment
+my_django_env/
+
+# Ignore static and media files
+static/
+job_descriptions/*.pdf
+
+# ignore deploy.sh
+deploy.sh
+
+# Ignore migration & wsgi cache files
+hiringManagementTool/migrations/__pycache__/
+hiringManagementTool/wsgi.py
