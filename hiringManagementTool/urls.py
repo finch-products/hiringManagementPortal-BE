@@ -13,7 +13,8 @@ from .views import (
     DemandStatusDetailsViewSet,
     InternalDepartmentDetailsViewSet,
     LOBDetailsViewSet,
-    CandidateMasterViewSet
+    CandidateMasterViewSet,
+    RoleMasterViewSet
 )
 
 router = DefaultRouter()
