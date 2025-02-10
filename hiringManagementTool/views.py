@@ -1,6 +1,6 @@
 from rest_framework import viewsets
-from .models import ClientMaster, InternalDepartmentMaster, LOBMaster, LocationMaster, OpenDemand, EmployeeMaster, ClientManagerMaster
-from .serializers import ClientMasterSerializer, ClientManagerMasterSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer
+from .models import ClientMaster, InternalDepartmentMaster, LOBMaster, LocationMaster, OpenDemand, EmployeeMaster, ClientManagerMaster, RoleMaster
+from .serializers import ClientMasterSerializer, ClientManagerMasterSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer, RoleMasterSerializer
 
 class OpenDemandViewSet(viewsets.ModelViewSet):
     queryset = OpenDemand.objects.all()
@@ -35,3 +35,7 @@ class InternalDepartmentMasterViewSet(viewsets.ModelViewSet):
 class EmployeeMasterViewSet(viewsets.ModelViewSet):
     queryset = EmployeeMaster.objects.all()
     serializer_class = EmployeeMasterSerializer
+    
+class RoleMasterViewSet(viewsets.ModelViewSet):
+    queryset = RoleMaster.objects.all()
+    serializer_class = RoleMasterSerializer

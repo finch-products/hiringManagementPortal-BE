@@ -18,14 +18,6 @@ class EmployeeMaster(models.Model):
         related_name="location_employee",
         help_text="Reference to Location Master Table"
     )
-    emp_insertby = models.ForeignKey(
-        'EmployeeMaster', 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='inserted_client_managers',
-        help_text="User ID (Employee) who inserted this record"
-    )
     
     emp_rlm_id = models.ForeignKey(
         'RoleMaster', 
@@ -448,7 +440,7 @@ class CandidateMaster(models.Model):
     cdm_description = models.TextField(blank=True, null=True, help_text="Cover letter or profile description")
     
     cdm_csm_id = models.ForeignKey(
-        'CandidateMaster',
+        'CandidateStatusMaster',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

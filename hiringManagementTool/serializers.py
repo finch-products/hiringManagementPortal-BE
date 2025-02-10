@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ClientMaster, ClientManagerMaster, LOBMaster, LocationMaster, OpenDemand, InternalDepartmentMaster, EmployeeMaster
+from .models import ClientMaster, ClientManagerMaster, LOBMaster, LocationMaster, OpenDemand, InternalDepartmentMaster, EmployeeMaster, RoleMaster
 
 class OpenDemandSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,3 +41,9 @@ class EmployeeMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeMaster
         fields = '__all__'
+        
+class RoleMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleMaster
+        fields = '__all__'
+        
