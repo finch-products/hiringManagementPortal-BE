@@ -11,8 +11,31 @@ class EmployeeMaster(models.Model):
     emp_name = models.CharField(max_length=50, help_text="First name of the employee")
     emp_email = models.EmailField(unique=True, help_text="Email ID of the employee")
     emp_phone = models.CharField(max_length=20, help_text="Mobile or phone number (e.g., +91-9988770098)")
-    emp_location = models.CharField(max_length=50, help_text="Location of the employee (e.g., New York, Delhi)")
-    emp_rlm_id = models.IntegerField(help_text="Role ID associated with the employee")
+    emp_lcm_id = models.ForeignKey(
+        'LocationMaster',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="location_employee",
+        help_text="Reference to Location Master Table"
+    )
+    emp_insertby = models.ForeignKey(
+        'EmployeeMaster', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='inserted_client_managers',
+        help_text="User ID (Employee) who inserted this record"
+    )
+    
+    emp_rlm_id = models.ForeignKey(
+        'RoleMaster', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='role_employee',
+        help_text="Role ID associated with the employee"
+    )
+    
     emp_isactive = models.BooleanField(default=True, help_text="Indicates if the employee is active or not")
     emp_keyword = models.TextField(help_text="Keywords to find specific requirements")
     emp_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record creation timestamp")
@@ -36,12 +59,33 @@ class ClientMaster(models.Model):
     clm_clientemail = models.EmailField(unique=True, help_text="Client Email Address")
     clm_clientphone = models.CharField(max_length=20, help_text="Client Phone Number (e.g., +91-9988770098)")
     clm_address = models.TextField(help_text="Client Full Address")
-    clm_location = models.CharField(max_length=50, help_text="City of Client")
+    clm_lcm_id = models.ForeignKey(
+        'LocationMaster',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="location_client",
+        help_text="Reference to Location Master Table"
+    )
     clm_isactive = models.BooleanField(default=True, help_text="Is Client Active Now")
     clm_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
-    clm_insertby = models.IntegerField(help_text="User ID who inserted the record (from connection table)")
     clm_updatedate = models.DateTimeField(auto_now=True, help_text="Last Updated Timestamp")
-    clm_updateby = models.IntegerField(null=True, blank=True, help_text="User ID who updated the record")
+    
+    clm_insertby = models.ForeignKey(
+        'EmployeeMaster', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name="clm_inserted_records",
+        help_text="Reference to the employee who inserted this record"
+    )
+    clm_updateby = models.ForeignKey(
+        'EmployeeMaster', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name="clm_updated_records",
+        help_text="Reference to the employee who last updated this record"
+    )
     
     def _str_(self):
         return f"{self.clm_name} ({self.clm_clientId})"
@@ -63,9 +107,15 @@ class ClientManagerMaster(models.Model):
     cmm_name = models.CharField(max_length=50, help_text="Client Manager Name")
     cmm_email = models.EmailField(unique=True, help_text="Client Manager Email Address")
     cmm_phone = models.CharField(max_length=20, help_text="Client Manager Phone Number (e.g., +91-9988770098)")
-    cmm_location = models.CharField(max_length=50, help_text="Client Manager Location")
+    cmm_lcm_id = models.ForeignKey(
+        'LocationMaster',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="location_clientmanager",
+        help_text="Reference to Location Master Table"
+    )
     cmm_isactive = models.BooleanField(default=True, help_text="Is Client Manager Active Now")
-    cmm_insertedby = models.ForeignKey(
+    cmm_insertby = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
@@ -73,7 +123,7 @@ class ClientManagerMaster(models.Model):
         related_name='inserted_client_managers',
         help_text="User ID (Employee) who inserted this record"
     )
-    cmm_updatedby = models.ForeignKey(
+    cmm_updateby = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
@@ -94,7 +144,7 @@ class LocationMaster(models.Model):
     lcm_name = models.CharField(max_length=50, help_text="Location Manager Name")
     lcm_state = models.CharField(max_length=50, help_text="State of the Location Manager")
     lcm_country = models.CharField(max_length=50, help_text="Country of the Location Manager")
-    lcm_insertedby = models.ForeignKey(
+    lcm_insertby = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
@@ -102,7 +152,7 @@ class LocationMaster(models.Model):
         related_name="lcm_inserted_records",
         help_text="Reference to the employee who inserted this record"
     )
-    lcm_updatedby = models.ForeignKey(
+    lcm_updateby = models.ForeignKey(
         'EmployeeMaster', 
         on_delete=models.SET_NULL, 
         null=True, 
@@ -327,7 +377,7 @@ class DemandStatusMaster(models.Model):
     dsm_sortid = models.IntegerField(help_text="Sorting order for statuses")
 
     dsm_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
-    dsm_insertedby = models.ForeignKey(
+    dsm_insertby = models.ForeignKey(
         'EmployeeMaster',
         on_delete=models.SET_NULL,
         null=True,
@@ -387,8 +437,13 @@ class CandidateMaster(models.Model):
     cdm_name = models.CharField(max_length=50, help_text="Full name of the candidate")
     cdm_email = models.EmailField(unique=True, help_text="Candidate email (must be unique)")
     cdm_phone = models.CharField(max_length=20, help_text="Candidate phone number")
-    cdm_location = models.CharField(max_length=50, help_text="Candidate location")
-
+    cdm_location = models.ForeignKey(
+        'LocationMaster',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="location_candidate",
+        help_text="Reference to Location Master Table"
+    )
     cdm_profile = models.FileField(upload_to="uploads/candidate_profiles/", blank=True, null=True, help_text="Candidate profile file (resume)")
     cdm_description = models.TextField(blank=True, null=True, help_text="Cover letter or profile description")
     
@@ -414,7 +469,7 @@ class CandidateMaster(models.Model):
     )
 
     cdm_updatedate = models.DateTimeField(auto_now=True, help_text="Record Last Updated Timestamp")
-    cdm_updatedby = models.ForeignKey(
+    cdm_updateby = models.ForeignKey(
         'EmployeeMaster',
         on_delete=models.SET_NULL,
         null=True,
@@ -440,7 +495,7 @@ class CandidateStatusMaster(models.Model):
     csm_sortid = models.IntegerField(help_text="Sorting order for statuses")
 
     csm_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
-    csm_insertedby = models.ForeignKey(
+    csm_insertby = models.ForeignKey(
         'EmployeeMaster',
         on_delete=models.SET_NULL,
         null=True,
@@ -484,8 +539,8 @@ class CandidateDemandHistory(models.Model):
 
     cdh_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
     
-    cdh_fromdata = models.TextField(blank=True, null=True, help_text="Old Value/Data before change")
-    cdh_todata = models.TextField(blank=True, null=True, help_text="New Value/Data after change")
+    cdh_fromdata = models.JSONField(blank=True, null=True, help_text="Old Value/Data before change")
+    cdh_todata = models.JSONField(blank=True, null=True, help_text="New Value/Data after change")
 
     def __str__(self):
         return f"CDH-{self.cdh_id} | Candidate: {self.cdh_cdm.cdm_name} | Demand ID: {self.cdh_dem.dem_id}"
