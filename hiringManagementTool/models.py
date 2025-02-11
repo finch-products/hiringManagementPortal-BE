@@ -97,6 +97,7 @@ class ClientManagerMaster(models.Model):
         'ClientMaster', 
         on_delete=models.CASCADE, 
         related_name='client_managers',
+        db_column="cmm_clm_id",
         help_text="Foreign Key from ClientMaster table"
     )
     cmm_name = models.CharField(max_length=50, help_text="Client Manager Name")
@@ -314,6 +315,7 @@ class OpenDemand(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="lob_demands",
+        db_column="dem_lob_id",
         help_text="Reference to LOB Master Table"
     )
 
@@ -322,6 +324,7 @@ class OpenDemand(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="idm_demands",
+        db_column="dem_idm_id",
         help_text="Reference to Internal Department Master Table"
     )
 
@@ -330,6 +333,7 @@ class OpenDemand(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="dsm_demands",
+        db_column="dem_dsm_id",
         help_text="Reference to Internal Department Master Table"
     )
 
@@ -453,6 +457,7 @@ class CandidateMaster(models.Model):
         null=True,
         blank=True,
         related_name="candidate_references",
+        db_column="cdm_csm_id",
         help_text="Reference to another candidate (if applicable)"
     )
 
