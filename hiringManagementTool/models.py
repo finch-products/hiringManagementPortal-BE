@@ -590,6 +590,3 @@ class RoleMaster(models.Model):
         db_table = 'rolemaster'
 
 
-    
-    
-
