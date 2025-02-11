@@ -16,6 +16,7 @@ class EmployeeMaster(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="location_employee",
+        db_column="emp_lcm_id",
         help_text="Reference to Location Master Table"
     )
     
@@ -25,6 +26,7 @@ class EmployeeMaster(models.Model):
         null=True, 
         blank=True,
         related_name='role_employee',
+        db_column="emp_rlm_id",
         help_text="Role ID associated with the employee"
     )
     
@@ -56,6 +58,7 @@ class ClientMaster(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="location_client",
+        db_column="clm_lcm_id",
         help_text="Reference to Location Master Table"
     )
     clm_isactive = models.BooleanField(default=True, help_text="Is Client Active Now")
@@ -225,6 +228,7 @@ class InternalDepartmentMaster(models.Model):
         null=True, 
         blank=True,
         related_name="employee_master",
+        db_column="idm_spoc_id",
         help_text="Single Point of Contact (SPOC) from Employee Master"
     )
 
@@ -234,6 +238,7 @@ class InternalDepartmentMaster(models.Model):
         null=True, 
         blank=True,
         related_name="internaldepartment_delivery_manager",
+         db_column="idm_deliverymanager_id",
         help_text="Delivery Manager from Employee Master"
     )
 
@@ -280,6 +285,7 @@ class OpenDemand(models.Model):
         'ClientManagerMaster',
         on_delete=models.CASCADE,
         related_name="demands",
+        db_column="dem_cmm_id",
         help_text="Reference to Client Manager"
     )
 
@@ -287,6 +293,7 @@ class OpenDemand(models.Model):
         'ClientMaster',
         on_delete=models.CASCADE,
         related_name="client_demands",
+        db_column="dem_clm_id",
         help_text="Reference to Client Master Table"
     )
 
@@ -295,6 +302,7 @@ class OpenDemand(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="location_demands",
+        db_column="dem_lcm_id",
         help_text="Reference to Location Master Table"
     )
 

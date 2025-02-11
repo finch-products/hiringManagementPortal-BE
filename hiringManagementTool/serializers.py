@@ -106,7 +106,7 @@ class LOBDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LOBMaster
-        fields = ['lob_name', 'lob_clientpartner', 'lob_deliverymanager']
+        fields = ['lob_id', 'lob_name', 'lob_clientpartner', 'lob_deliverymanager']
 
 class CandidateMasterSerializer(serializers.ModelSerializer):
     class Meta:
