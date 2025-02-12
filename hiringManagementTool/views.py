@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import CandidateMaster, ClientMaster, InternalDepartmentMaster, LOBMaster, LocationMaster, OpenDemand, EmployeeMaster, ClientManagerMaster, RoleMaster, DemandStatusMaster
-from .serializers import CandidateMasterSerializer, ClientMasterSerializer, ClientManagerMasterSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer, RoleMasterSerializer,  LocationDetailsSerializer, DemandStatusDetailsSerializer, InternalDepartmentDetailsSerializer, LOBDetailSerializer, ClientDetailsSerializer
+from .serializers import CandidateMasterSerializer, ClientMasterSerializer, ClientManagerMasterSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer, RoleMasterSerializer,  LocationDetailsSerializer, DemandStatusDetailsSerializer, InternalDepartmentDetailsSerializer, LOBDetailSerializer, ClientDetailsSerializer, OpenDemandwithstatusSerializer
 
 class OpenDemandViewSet(viewsets.ModelViewSet):
     queryset = OpenDemand.objects.all()
@@ -102,3 +102,11 @@ class CandidateMasterViewSet(viewsets.ModelViewSet):
 class RoleMasterViewSet(viewsets.ModelViewSet):
     queryset = RoleMaster.objects.all()
     serializer_class = RoleMasterSerializer
+
+
+class DemandStatusforstatusViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet to fetch OpenDemand details along with the related DemandStatus.
+    """
+    queryset = OpenDemand.objects.select_related("dem_dsm_id").all()
+    serializer_class = OpenDemandwithstatusSerializer

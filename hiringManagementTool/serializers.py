@@ -118,3 +118,41 @@ class RoleMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoleMaster
         fields = '__all__'
+
+
+class DemandStatusforstatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DemandStatusMaster
+        fields = "__all__"  # Include all fields from DemandStatusMaster
+
+class OpenDemandwithstatusSerializer(serializers.ModelSerializer):
+    demand_status = DemandStatusforstatusSerializer(source="dem_dsm_id", read_only=True)  # Nested serializer
+
+    class Meta:
+        model = OpenDemand
+        fields = [
+            "dem_id",
+            "dem_ctoolnumber",
+            "dem_ctooldate",
+            "dem_cmm_id",
+            "dem_clm_id",
+            "dem_lcm_id",
+            "dem_validtill",
+            "dem_skillset",
+            "dem_lob_id",
+            "dem_idm_id",
+            "dem_positions",
+            "dem_rrnumber",
+            "dem_jrnumber",
+            "dem_rrgade",
+            "dem_gcblevel",
+            "dem_jd",
+            "dem_comment",
+            "dem_isreopened",
+            "dem_isactive",
+            "dem_insertdate",
+            "dem_insertby",
+            "dem_updatedate",
+            "dem_updateby",
+            "demand_status",  # This will include demand status details
+        ]

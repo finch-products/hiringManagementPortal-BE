@@ -14,7 +14,8 @@ from .views import (
     InternalDepartmentDetailsViewSet,
     LOBDetailsViewSet,
     CandidateMasterViewSet,
-    RoleMasterViewSet
+    RoleMasterViewSet,
+    DemandStatusforstatusViewSet
 )
 
 router = DefaultRouter()
@@ -32,6 +33,7 @@ router.register(r'demand-status-details', DemandStatusDetailsViewSet, basename="
 router.register(r'internal-department-details', InternalDepartmentDetailsViewSet, basename='internal-department-details')
 router.register(r'lob-details', LOBDetailsViewSet, basename="lob-details")
 router.register(r'role-master', RoleMasterViewSet)
+router.register(r'opendemand-status-details', DemandStatusforstatusViewSet, basename="opendemand-status-details")
 
 urlpatterns = [
     path('', include(router.urls)),
