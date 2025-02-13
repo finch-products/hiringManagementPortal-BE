@@ -118,3 +118,8 @@ class RoleMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoleMaster
         fields = '__all__'
+        
+class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeMaster
+        fields = ['emp_id', 'emp_name', 'emp_email', 'emp_phone']

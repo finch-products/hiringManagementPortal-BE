@@ -1,8 +1,9 @@
+from hiringManagementTool.constants import ROLE_MAPPING
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import CandidateMaster, ClientMaster, InternalDepartmentMaster, LOBMaster, LocationMaster, OpenDemand, EmployeeMaster, ClientManagerMaster, RoleMaster, DemandStatusMaster
-from .serializers import CandidateMasterSerializer, ClientMasterSerializer, ClientManagerMasterSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer, RoleMasterSerializer,  LocationDetailsSerializer, DemandStatusDetailsSerializer, InternalDepartmentDetailsSerializer, LOBDetailSerializer, ClientDetailsSerializer
+from .serializers import CandidateMasterSerializer, ClientMasterSerializer, ClientManagerMasterSerializer, EmployeeSerializer, InternalDepartmentMasterSerializer, LOBMasterSerializer, LocationMasterSerializer, OpenDemandSerializer, EmployeeMasterSerializer, RoleMasterSerializer,  LocationDetailsSerializer, DemandStatusDetailsSerializer, InternalDepartmentDetailsSerializer, LOBDetailSerializer, ClientDetailsSerializer
 
 class OpenDemandViewSet(viewsets.ModelViewSet):
     queryset = OpenDemand.objects.all()
@@ -94,6 +95,35 @@ class LOBDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     """API View to fetch LOB details with client partner & delivery manager."""
     queryset = LOBMaster.objects.all()
     serializer_class = LOBDetailSerializer
+    
+class CPDMViewSet(viewsets.ViewSet):
+    """
+    ViewSet to retrieve Client Partners (CP), Delivery Managers (DM) and SPOC
+    """
+
+    def list(self, request):
+        try:
+            # Get All Role IDs Dynamically
+            role_ids = {key: RoleMaster.objects.filter(rlm_name=value).first() for key, value in ROLE_MAPPING.items()}
+
+            # Filter Employees Based on Role IDs
+            employees_by_role = {
+                key: EmployeeMaster.objects.filter(emp_rlm_id=role.rlm_id) if role else []
+                for key, role in role_ids.items()
+            }
+
+            # Serialize Data
+            serialized_data = {
+                key: EmployeeSerializer(emp_list, many=True).data
+                for key, emp_list in employees_by_role.items()
+            }
+
+            return Response(serialized_data)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    
     
 class CandidateMasterViewSet(viewsets.ModelViewSet):
     queryset = CandidateMaster.objects.all()

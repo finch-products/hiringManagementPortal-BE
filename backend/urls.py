@@ -17,7 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+#     path('api/', include('hiringManagementTool.urls')),
+# ]
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('hiringManagementTool.urls')),
+    path('demands/', include('hiringManagementTool.components.demands.urls')),
+    path('clients/', include('hiringManagementTool.components.clients.urls')),
+    path('locations/', include('hiringManagementTool.components.locations.urls')),
+    path('lobs/', include('hiringManagementTool.components.lobs.urls')),
+    path('departments/', include('hiringManagementTool.components.demands.urls')),
+    path('employees/', include('hiringManagementTool.components.employees.urls')),
+    path('candidates/', include('hiringManagementTool.components.candidates.urls')),
 ]
+

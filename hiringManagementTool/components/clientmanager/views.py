@@ -1,0 +1,1 @@
+# views.py for clients
