@@ -23,12 +23,12 @@ from django.urls import include, path
 # ]
 
 urlpatterns = [
-    path('demands/', include('hiringManagementTool.components.demands.urls')),
-    path('clients/', include('hiringManagementTool.components.clients.urls')),
-    path('locations/', include('hiringManagementTool.components.locations.urls')),
-    path('lobs/', include('hiringManagementTool.components.lobs.urls')),
-    path('departments/', include('hiringManagementTool.components.demands.urls')),
-    path('employees/', include('hiringManagementTool.components.employees.urls')),
-    path('candidates/', include('hiringManagementTool.components.candidates.urls')),
+    path('api/demands/', include('hiringManagementTool.components.demands.urls')),
+    path('api//clients/', include('hiringManagementTool.components.clients.urls')),
+    path('api/locations/', include('hiringManagementTool.components.locations.urls')),
+    path('api/lobs/', include('hiringManagementTool.components.lobs.urls')),
+    path('api/departments/', include('hiringManagementTool.components.demands.urls')),
+    path('api/employees/', include('hiringManagementTool.components.employees.urls')),
+    path('api/candidates/', include('hiringManagementTool.components.candidates.urls')),
 ]
 
