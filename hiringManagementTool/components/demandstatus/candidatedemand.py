@@ -10,6 +10,7 @@ class CandidateDemandLink(models.Model):
         'CandidateMaster',
         on_delete=models.CASCADE,
         related_name="demand_links",
+        db_column="cdl_cdm_id",
         help_text="Reference to Candidate Master"
     )
 
@@ -17,6 +18,7 @@ class CandidateDemandLink(models.Model):
         'OpenDemand',
         on_delete=models.CASCADE,
         related_name="candidate_links",
+        db_column="cdl_dem_id",
         help_text="Reference to Demand Table"
     )
 
@@ -26,6 +28,7 @@ class CandidateDemandLink(models.Model):
         null=True,
         blank=True,
         related_name="linked_candidates",
+        db_column="cdl_csm_id",
         help_text="Reference to Candidate Status Master"
     )
 
