@@ -17,6 +17,7 @@ class CandidateMaster(models.Model):
         related_name="location_candidate",
         help_text="Reference to Location Master Table"
     )
+
     cdm_profile = models.FileField(upload_to="uploads/candidate_profiles/", blank=True, null=True, help_text="Candidate profile file (resume)")
     cdm_description = models.TextField(blank=True, null=True, help_text="Cover letter or profile description")
     

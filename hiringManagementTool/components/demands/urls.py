@@ -3,5 +3,5 @@ from hiringManagementTool.components.demands.views import DemandDetailAPIView, D
 
 urlpatterns = [
     path("", DemandAPIView.as_view(), name="all-demands"),
-    path("<int:id>/", DemandDetailAPIView.as_view(), name="demand-details"),    
+    path("<int:id>/", DemandDetailAPIView.as_view(), name="demand-details"), 
 ]
