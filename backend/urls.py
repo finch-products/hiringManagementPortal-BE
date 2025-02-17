@@ -27,7 +27,7 @@ urlpatterns = [
     path('api/clients/', include('hiringManagementTool.components.clients.urls')),
     path('api/locations/', include('hiringManagementTool.components.locations.urls')),
     path('api/lobs/', include('hiringManagementTool.components.lobs.urls')),
-    # path('api/departments/', include('hiringManagementTool.components.departments.urls')),
+    path('api/departments/', include('hiringManagementTool.components.departments.urls')),
     path('api/roles/', include('hiringManagementTool.components.roles.urls')),
     path('api/employees/', include('hiringManagementTool.components.employees.urls')),
     path('api/candidates/', include('hiringManagementTool.components.candidates.urls')),

@@ -1,6 +1,6 @@
 from django.urls import path, include
-from hiringManagementTool.components.departments.views import InternalDepartmentDetailsViewSet
+from hiringManagementTool.components.departments.views import InternalDepartmentAPIView
 
 urlpatterns = [
-    path("", InternalDepartmentDetailsViewSet.as_view(), name="dept-details")  
+    path("", InternalDepartmentAPIView().as_view(), name="dept-details")
 ]

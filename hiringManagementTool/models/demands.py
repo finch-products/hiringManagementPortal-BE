@@ -12,13 +12,13 @@ class OpenDemand(models.Model):
     dem_ctoolnumber = models.CharField(max_length=50, help_text="Client Tool Number from Client")
     dem_ctooldate = models.DateTimeField(help_text="Requirement/Demand Date from Client")
 
-    dem_cmm_id = models.ForeignKey(
-        'ClientManagerMaster',
-        on_delete=models.CASCADE,
-        related_name="demands",
-        db_column="dem_cmm_id",
-        help_text="Reference to Client Manager"
-    )
+    # dem_cmm_id = models.ForeignKey(
+    #     'ClientManagerMaster',
+    #     on_delete=models.CASCADE,
+    #     related_name="demands",
+    #     db_column="dem_cmm_id",
+    #     help_text="Reference to Client Manager"
+    # )
 
     dem_clm_id = models.ForeignKey(
         'ClientMaster',
