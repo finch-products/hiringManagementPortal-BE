@@ -4,7 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from hiringManagementTool.components.departments.serializers import InternalDepartmentSerializer
 from hiringManagementTool.models.departments import InternalDepartmentMaster
-
+from hiringManagementTool.models.employees import EmployeeMaster
+from hiringManagementTool.models.roles import RoleMaster
+from .serializers import EmployeeMasterSerializer
 # class InternalDepartmentAPIView(APIView):  # ReadOnly API
 #     queryset = InternalDepartmentMaster.objects.select_related(
 #         'idm_deliverymanager_id__emp_lcm_id'  # Optimized query for related fields
@@ -27,3 +29,21 @@ class InternalDepartmentAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class EmployeeByRoleAPIView(APIView):
+    def get(self, request):
+        # Get roles that match 'SPOC' and 'Delivery Manager'
+        roles = RoleMaster.objects.filter(rlm_name__in=["SPOC", "Delivery Manager"])
+        
+        response_data = {}
+
+        for role in roles:
+            # Get employees associated with this role
+            employees = EmployeeMaster.objects.filter(emp_rlm_id=role)
+            serialized_employees = EmployeeMasterSerializer(employees, many=True).data
+            
+            # Add data to response dictionary
+            response_data[role.rlm_name] = serialized_employees
+        
+        return Response(response_data)
