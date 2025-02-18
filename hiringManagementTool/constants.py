@@ -14,3 +14,12 @@ ROLE_MAPPING = {
     "AH": ROLE_ACCOUNT_HEAD,
     "ADMIN": ROLE_ADMIN   
 }
+
+DEMAND_STATUS = {
+    "OPEN": "Open",
+    "REQ_NOT_CLEAR": "Req Not Clear",
+    "JD_NOT_RECEIVED": "JD Not Received",
+    "CLOSED": "Closed",
+    "EXTERNAL_HIRING": "External Hiring",
+    "CANDIDATE_SCREENING": "Candidate Screening",
+} 

@@ -1,11 +1,10 @@
 from django.db import models
-from hiringManagementTool.models.clientmanagers import ClientManagerMaster
-from hiringManagementTool.models.clients import ClientMaster
-from hiringManagementTool.models.locations import LocationMaster
-from hiringManagementTool.models.lobs import LOBMaster
-from hiringManagementTool.models.departments import InternalDepartmentMaster
-from hiringManagementTool.models.demandstatus import DemandStatusMaster
-from hiringManagementTool.models.employees import EmployeeMaster
+from .clients import ClientMaster
+from .locations import LocationMaster
+from .lobs import LOBMaster
+from .departments import InternalDepartmentMaster
+from .demandstatus import DemandStatusMaster
+from .employees import EmployeeMaster
 
 class OpenDemand(models.Model):
     dem_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Demand Entry)")

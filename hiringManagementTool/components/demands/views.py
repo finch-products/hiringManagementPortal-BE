@@ -2,6 +2,7 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.components.demands.serializers import OpenDemandSerializer
 
@@ -15,11 +16,14 @@ class DemandAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        """Create a new OpenDemand"""
+        """Create a new demand and auto-assign status"""
+        print("\n📥 Incoming Request Data:", request.data)
         serializer = OpenDemandSerializer(data=request.data)
         if serializer.is_valid():
+            print("\n✅ Serializer Validated Data:", serializer.validated_data)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print("\n❌ Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DemandDetailAPIView(RetrieveUpdateAPIView):
