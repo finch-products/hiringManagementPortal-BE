@@ -1,5 +1,9 @@
 from django.db import models
 
+from .demandstatus import DemandStatusMaster
+from .demands import OpenDemand
+from .employees import EmployeeMaster
+
 class DemandHistory(models.Model):
     dhs_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Status History)")
     
