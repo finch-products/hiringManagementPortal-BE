@@ -1,42 +1,36 @@
 from django.db import models
-from hiringManagementTool.models.demandstatus import DemandStatusMaster
 
-
-class DemandHistoryTable(models.Model):
+class DemandHistory(models.Model):
     dhs_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Status History)")
-    dhs_dem_id = models.ForeignKey(
-        'OpenDemand',
-        on_delete=models.CASCADE,
-        related_name="open demand",
-        db_column="dhs_dem_id",
-        help_text="Reference to Open Demand"
-    )
-
-    dhs_dsm = models.ForeignKey(
+    
+    dhs_dsm_id = models.ForeignKey(
         'DemandStatusMaster',
         on_delete=models.CASCADE,
         related_name="demand_history",
+        db_column="dhs_dsm_id",
         help_text="Reference to Demand Status Master"
     )
-
-    dhs_dsm_code = models.CharField(max_length=50, help_text="Demand Status Code (from DemandStatusMaster)")
-    dhs_dsm_description = models.TextField(blank=True, null=True, help_text="Demand Status Description (from DemandStatusMaster)")
-    dhs_dsm_sortid = models.IntegerField(help_text="Sorting order (from DemandStatusMaster)")
+    
+    dhs_dem_id = models.ForeignKey(
+        'OpenDemand',
+        on_delete=models.CASCADE,
+        related_name="open_demand",
+        db_column="dhs_dem_id",
+        help_text="Reference to Open demand",
+    )
     dhs_dsm_insertdate = models.DateTimeField(help_text="Status insert date (from DemandStatusMaster)")
-    dhs_dsm_updateddate = models.DateTimeField(auto_now=True, help_text="Status last updated date & time")
-    dhs_dsm_isclosed = models.BooleanField(default=False, help_text="Indicates if status is treated as closed")
-
-    dhs_comments = models.TextField(blank=True, null=True, help_text="Comments regarding status change")
     dhs_fromdata = models.TextField(blank=True, null=True, help_text="Old value/data before update")
     dhs_todata = models.TextField(blank=True, null=True, help_text="New value/data after update")
-
-    dhs_insertby = models.ForeignKey(
+    dhs_log_msg = models.TextField(blank=True, null=True, help_text="Comments regarding status change")
+    dhs_inserted_by=models.ForeignKey(
         'EmployeeMaster',
         on_delete=models.SET_NULL,
         null=True,
-        related_name="demands_inserted",
-        help_text="User ID (Employee) who inserted this record"
-    ) 
+        blank=True,
+        related_name="demand_inserted",
+        db_column="dhs_inserted_by",
+        help_text="User ID (Employee) who created this record"
+    )
 
     def __str__(self):
         return f"History ID: {self.dhs_id} - Status: {self.dhs_dsm_code}"
