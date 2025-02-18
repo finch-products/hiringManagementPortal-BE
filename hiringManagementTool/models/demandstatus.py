@@ -1,6 +1,8 @@
 from django.db import models
 
 
+from .employees import EmployeeMaster
+
 class DemandStatusMaster(models.Model):
     dsm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Demand Status)")
     dsm_code = models.CharField(max_length=50, unique=True, help_text="Status Name (e.g., Open, JD Received, Rejected, etc.)")
@@ -13,6 +15,7 @@ class DemandStatusMaster(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="status_inserted",
+        db_column="dsm_insertby",
         help_text="User ID (Employee) who created this status"
     )
 
@@ -22,6 +25,7 @@ class DemandStatusMaster(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="status_updated",
+        db_column="dsm_updateby",
         help_text="User ID (Employee) who last updated this status"
     )
 
