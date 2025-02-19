@@ -53,7 +53,7 @@ class InternalDepartmentMaster(models.Model):
     )
 
     def __str__(self):
-        return self.sum_unitName
+        return self.idm_unitname
     
     class Meta:
         managed = True

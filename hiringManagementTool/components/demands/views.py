@@ -18,11 +18,14 @@ class DemandAPIView(APIView):
     def post(self, request):
         """Create a new demand and auto-assign status"""
         print("\n📥 Incoming Request Data:", request.data)
+        print("\n📥 dem_jd value:", request.data.get('dem_jd'))  # Log the value of dem_jd
+
         serializer = OpenDemandSerializer(data=request.data)
         if serializer.is_valid():
             print("\n✅ Serializer Validated Data:", serializer.validated_data)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
         print("\n❌ Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
