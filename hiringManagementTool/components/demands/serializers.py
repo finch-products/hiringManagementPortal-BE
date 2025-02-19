@@ -31,41 +31,33 @@ class DemandStatusMasterSerializer(serializers.ModelSerializer):
         fields = ['dsm_id', 'dsm_code', 'dsm_description']
 
 class OpenDemandSerializer(serializers.ModelSerializer):
-    # Readable representation for GET requests
     client_details = ClientMasterSerializer(source='dem_clm_id', read_only=True)
     location_details = LocationMasterSerializer(source='dem_lcm_id', read_only=True)
     lob_details = LOBMasterSerializer(source='dem_lob_id', read_only=True)
     department_details = InternalDepartmentMasterSerializer(source='dem_idm_id', read_only=True)
     status_details = DemandStatusMasterSerializer(source='dem_dsm_id', read_only=True)
 
-    # Writeable fields for POST requests
     dem_clm_id = serializers.PrimaryKeyRelatedField(queryset=ClientMaster.objects.all(), write_only=True)
     dem_lcm_id = serializers.PrimaryKeyRelatedField(queryset=LocationMaster.objects.all(), write_only=True)
     dem_lob_id = serializers.PrimaryKeyRelatedField(queryset=LOBMaster.objects.all(), write_only=True)
     dem_idm_id = serializers.PrimaryKeyRelatedField(queryset=InternalDepartmentMaster.objects.all(), write_only=True)
-    dem_dsm_id = serializers.PrimaryKeyRelatedField(queryset=DemandStatusMaster.objects.all(), write_only=True)
+    dem_dsm_id = serializers.PrimaryKeyRelatedField(queryset=DemandStatusMaster.objects.all(), write_only=True, required=False)  # ✅ FIXED
     
-
     def create(self, validated_data):
-        """Assign demand status dynamically before saving"""
-       
-        jd_present = validated_data.get("dem_jd") is not None
-        status_key = "Open" if jd_present else "JD Not Received"
-
-        dsm_code = DEMAND_STATUS.get(status_key, "Open")
+        jd_present = validated_data.get("dem_jd")
+        status_key = "OPEN" if jd_present else "JD_NOT_RECEIVED"
+        dsm_code = DEMAND_STATUS.get(status_key)
 
         try:
             dsm_status = DemandStatusMaster.objects.get(dsm_code__iexact=dsm_code)
-
             validated_data["dem_dsm_id"] = dsm_status  # Assign ForeignKey instance
         except DemandStatusMaster.DoesNotExist:
             raise serializers.ValidationError(
                 {"dem_dsm_id": f"❌ ERROR: Demand status '{dsm_code}' not found in the database."}
-            )
+             )
 
         return super().create(validated_data)
 
-    
     class Meta:
         model = OpenDemand
         fields = '__all__'
