@@ -10,12 +10,11 @@ class DemandStatusMaster(models.Model):
     dsm_sortid = models.IntegerField(help_text="Sorting order for statuses")
 
     dsm_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
-    dsm_insertby = models.ForeignKey(
+    dsm_insertby_id = models.ForeignKey(
         'EmployeeMaster',
         on_delete=models.SET_NULL,
         null=True,
         related_name="status_inserted",
-        db_column="dsm_insertby",
         help_text="User ID (Employee) who created this status"
     )
 
@@ -25,7 +24,6 @@ class DemandStatusMaster(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="status_updated",
-        db_column="dsm_updateby",
         help_text="User ID (Employee) who last updated this status"
     )
 
