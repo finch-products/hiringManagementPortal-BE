@@ -61,3 +61,17 @@ class OpenDemandSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpenDemand
         fields = '__all__'
+
+class OpenDemandUpdateSerializer(serializers.ModelSerializer):
+    dem_id = serializers.IntegerField(required=True)  # Mandatory
+    dem_updateby_id = serializers.IntegerField(required=True)  # Mandatory
+
+    class Meta:
+        model = OpenDemand
+        fields = [
+            "dem_id", "dem_ctooldate", "dem_validtill", "dem_skillset", "dem_positions",
+            "dem_rrnumber", "dem_jrnumber", "dem_rrgade", "dem_gcblevel", "dem_jd",
+            "dem_comment", "dem_isreopened", "dem_isactive", "dem_clm_id", "dem_dsm_id",
+            "dem_idm_id", "dem_insertby_id", "dem_lcm_id", "dem_lob_id", "dem_updateby_id"
+        ]
+        extra_kwargs = {field: {"required": False, "allow_null": True} for field in fields}
