@@ -26,7 +26,7 @@ class DemandHistory(models.Model):
     dhs_fromdata = models.TextField(blank=True, null=True, help_text="Old value/data before update")
     dhs_todata = models.TextField(blank=True, null=True, help_text="New value/data after update")
     dhs_log_msg = models.TextField(blank=True, null=True, help_text="Comments regarding status change")
-    dhs_insertby=models.ForeignKey(
+    """dhs_insertby=models.ForeignKey(
         'EmployeeMaster',
         on_delete=models.SET_NULL,
         null=True,
@@ -34,7 +34,7 @@ class DemandHistory(models.Model):
         related_name="demand_inserted",
         db_column="dhs_insertby",
         help_text="User ID (Employee) who created this record"
-    )
+    )"""
 
     def __str__(self):
         return f"History ID: {self.dhs_id} - Status: {self.dhs_dsm_code}"
