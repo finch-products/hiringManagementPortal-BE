@@ -2,10 +2,18 @@ from django.db import models
 from hiringManagementTool.models.locations import LocationMaster
 from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
 from hiringManagementTool.models.employees import EmployeeMaster
-
+from datetime import datetime
+from django.db.models import Max
+from pudb import set_trace
 
 class CandidateMaster(models.Model):
-    cdm_id = models.AutoField(primary_key=True, help_text="Unique Candidate ID (Auto-generated)")
+    cdm_id = models.CharField(
+        primary_key=True,
+        db_column="cdm_id",
+        max_length=50, 
+        editable=False, 
+        help_text="Auto-generated ID in format cdm_ddmmyyyy_1"
+    )
     cdm_emp_id = models.IntegerField(null=True, blank=True, help_text="Employee ID for tracking (if internal)")
     cdm_name = models.CharField(max_length=50, help_text="Full name of the candidate")
     cdm_email = models.EmailField(unique=True, help_text="Candidate email (must be unique)")
@@ -56,6 +64,28 @@ class CandidateMaster(models.Model):
     cdm_isinternal = models.BooleanField(default=False, help_text="1 for internal candidate, 0 for external")
     cdm_isactive = models.BooleanField(default=True, help_text="1 for active, 0 for inactive")
 
+    def save(self, *args, **kwargs):
+        if not self.cdm_id:
+         today = datetime.today().strftime('%d%m%Y')
+        
+        # Get the max numeric suffix
+        latest_entry = CandidateMaster.objects.filter(cdm_id__startswith=f"cdm_{today}_").aggregate(
+            max_id=Max("cdm_id")
+        )
+
+        if latest_entry["max_id"]:
+            try:
+                last_number = int(latest_entry["max_id"].rsplit("_", 1)[-1])  # Extract last numeric part
+                new_number = last_number + 1
+            except ValueError:
+                new_number = 1  # Handle edge cases where ID format is incorrect
+        else:
+            new_number = 1  # Start from 1
+
+        self.cdm_id = f"cdm_{today}_{new_number}"  # No zero-padding, pure integer sorting
+
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"{self.cdm_name} ({'Internal' if self.cdm_isinternal else 'External'})"
     
