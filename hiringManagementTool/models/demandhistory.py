@@ -20,6 +20,7 @@ class DemandHistory(models.Model):
         on_delete=models.CASCADE,
         related_name="open_demand",
         db_column="dhs_dem_id",
+        to_field="dem_id",
         help_text="Reference to Open demand",
     )
     dhs_dsm_insertdate = models.DateTimeField(help_text="Status insert date (from DemandStatusMaster)")

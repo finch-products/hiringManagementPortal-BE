@@ -5,6 +5,7 @@ from hiringManagementTool.models.candidates import CandidateMaster
 
 class CandidateAPIView(ListCreateAPIView):
     queryset = CandidateMaster.objects.all()
+
     serializer_class = CandidateMasterSerializer
 
 
@@ -12,4 +13,4 @@ class CandidateDetailAPIView(RetrieveUpdateAPIView):
     queryset = CandidateMaster.objects.all()
     serializer_class = CandidateMasterSerializer
     lookup_field = 'cdm_id'
-    lookup_url_kwarg = 'id'
+    lookup_url_kwarg = 'cdm_id'
