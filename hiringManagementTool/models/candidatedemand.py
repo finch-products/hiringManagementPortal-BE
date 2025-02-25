@@ -34,7 +34,7 @@ class CandidateDemandLink(models.Model):
         help_text="Reference to Candidate Status Master"
     )
 
-    cdl_joiningdate = models.DateField(help_text="Future Joining Date of Candidate")
+    cdl_joiningdate = models.DateField(null=True,help_text="Future Joining Date of Candidate")
     
     cdl_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
 
