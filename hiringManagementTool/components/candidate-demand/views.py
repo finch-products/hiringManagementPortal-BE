@@ -4,7 +4,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
-from .serializers import OpenDemandResponseSerializer
+from .serializers import CandidateDemandLinkSerializer, OpenDemandResponseSerializer
 import logging
 logger = logging.getLogger(__name__)
 

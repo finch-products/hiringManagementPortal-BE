@@ -2,9 +2,9 @@
 from rest_framework import generics
 from rest_framework import viewsets
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
-from hiringManagementTool.components.demandstatus.serializers import DemandStatusDetailsSerializer
+from hiringManagementTool.components.demandstatus.serializers import DemandStatusDetailsSerializer, DemandStatusSerializer
 from hiringManagementTool.models.demandstatus import DemandStatusMaster
-
+from rest_framework.generics import ListAPIView
 
 class DemandStatusDetailsAPIView(generics.ListAPIView):
     serializer_class = DemandStatusDetailsSerializer
@@ -19,3 +19,8 @@ class DemandStatusDetailsAPIView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         
         return Response(serializer.data, status=200)
+    
+
+class DemandStatusDropdownAPIView(ListAPIView):
+    queryset = DemandStatusMaster.objects.all()
+    serializer_class = DemandStatusSerializer
