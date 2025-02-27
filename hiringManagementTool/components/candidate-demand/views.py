@@ -4,7 +4,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
-from .serializers import OpenDemandResponseSerializer
+from .serializers import CandidateDemandLinkSerializer, OpenDemandResponseSerializer
 import logging
 logger = logging.getLogger(__name__)
 
@@ -36,11 +36,7 @@ class GetCandidatelistByDemandId(APIView):
         }
 
         serializer = OpenDemandResponseSerializer(response_data)
-        return Response(serializer.data, status=status.HTTP_200_OK)from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from hiringManagementTool.models.candidatedemand import CandidateDemandLink
-from .serializers import CandidateDemandLinkSerializer
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CandidateDemandLinkAPIView(APIView):
     def post(self, request):
