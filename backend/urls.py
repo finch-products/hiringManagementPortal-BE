@@ -31,8 +31,8 @@ urlpatterns = [
     path('api/roles/', include('hiringManagementTool.components.roles.urls')),
     path('api/employees/', include('hiringManagementTool.components.employees.urls')),
     path('api/candidates/', include('hiringManagementTool.components.candidates.urls')),
-     path('api/reports/', include('hiringManagementTool.components.reports.urls')),
-    # path('api/demand-status/', include('hiringManagementTool.components.demandstatus.urls'))
+    path('api/reports/', include('hiringManagementTool.components.reports.urls')),
+    path('api/demand-status/', include('hiringManagementTool.components.demandstatus.urls')),
     path('api/demand-history/', include('hiringManagementTool.components.demand-history.urls')),
     path('api/candidate-demand/',include('hiringManagementTool.components.candidate-demand.urls'))
 ]
