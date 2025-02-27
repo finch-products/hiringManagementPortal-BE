@@ -38,6 +38,12 @@ class GetCandidatelistByDemandId(APIView):
         serializer = OpenDemandResponseSerializer(response_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from hiringManagementTool.models.candidatedemand import CandidateDemandLink
+from .serializers import CandidateDemandLinkSerializer
+
 class CandidateDemandLinkAPIView(APIView):
     def post(self, request):
         data = request.data  # Expecting a list of candidates under a demand
