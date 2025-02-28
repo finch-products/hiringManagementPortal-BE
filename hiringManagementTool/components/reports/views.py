@@ -1,9 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .services import get_age_demand_data, get_open_demand_data
+from .services import get_age_demand_data, get_open_demand_data, get_total_positions_opened_last_week, get_demand_fulfillment_metrics
 from .serializers import (
-    AgedemandReportSerializer, OpenDemandSerializer
+    AgedemandReportSerializer, OpenDemandSerializer, TotalPositionsOpenedLastWeekSerializer, DemandFulfillmentMetricsSerializer
 
 )
 
@@ -25,4 +25,22 @@ class OpenDemandCountReportView(APIView):
     def get(self, request, format=None):
         data = get_open_demand_data()  # Fetch open demand statistics
         serializer = OpenDemandSerializer(data)
+        return Response(serializer.data)
+    
+class TotalPositionsOpenedLastWeekView(APIView):
+    """
+    API endpoint that returns the total number of positions opened last week.
+    """
+    def get(self, request, format=None):
+        data = get_total_positions_opened_last_week()
+        serializer = TotalPositionsOpenedLastWeekSerializer(data)
+        return Response(serializer.data)
+    
+class DemandFulfillmentMetricsView(APIView):
+    """
+    Fetch recruitment progress summary as percentages.
+    """
+    def get(self, request, format=None):
+        data = get_demand_fulfillment_metrics()
+        serializer = DemandFulfillmentMetricsSerializer(data)
         return Response(serializer.data)
