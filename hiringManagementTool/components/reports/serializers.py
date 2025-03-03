@@ -9,3 +9,21 @@ class OpenDemandSerializer(serializers.Serializer):
     total_non_open_demands = serializers.IntegerField()
     total_india_open_demands = serializers.IntegerField()
     total_non_india_open_demands = serializers.IntegerField()
+
+class TotalPositionsOpenedLastWeekSerializer(serializers.Serializer):
+    total_positions_opened_last_week = serializers.IntegerField()
+
+class DemandFulfillmentMetricsSerializer(serializers.Serializer):
+    open_positions = serializers.DecimalField(max_digits=5, decimal_places=2)
+    profiles_submitted = serializers.DecimalField(max_digits=5, decimal_places=2)
+    interview_scheduled = serializers.DecimalField(max_digits=5, decimal_places=2)
+    profiles_not_submitted = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+class LobTargetProgressSerializer(serializers.Serializer):
+    LOB_name = serializers.CharField() # Adjust max_length as needed
+    percentage = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+class DemandByStatusSerializer(serializers.Serializer):
+    category = serializers.CharField()
+    LOB = serializers.JSONField()
+    total = serializers.IntegerField()

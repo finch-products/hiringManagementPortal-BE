@@ -5,21 +5,43 @@ from hiringManagementTool.models.demandstatus import DemandStatusMaster
 from hiringManagementTool.models.departments import InternalDepartmentMaster
 from hiringManagementTool.models.lobs import LOBMaster
 from hiringManagementTool.models.locations import LocationMaster
+from hiringManagementTool.models.employees import EmployeeMaster
 from rest_framework import serializers
 
 class ClientMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClientMaster
-        fields = ['clm_id', 'clm_name'] 
+        fields = ['clm_id', 'clm_name', 'clm_managername'] 
 class LocationMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocationMaster
         fields = ['lcm_id', 'lcm_name']
 
+class EmployeeMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeMaster
+        fields = ['emp_id', 'emp_name']
+
 class LOBMasterSerializer(serializers.ModelSerializer):
+    client_partner = serializers.SerializerMethodField()
+    delivery_manager = serializers.SerializerMethodField()
+
+    def get_client_partner(self, obj):
+        if obj.lob_clientpartner_id:
+            employee = EmployeeMaster.objects.filter(emp_id=obj.lob_clientpartner_id).first()
+            return EmployeeMasterSerializer(employee).data if employee else None
+        return None
+
+    def get_delivery_manager(self, obj):
+        if obj.lob_deliverymanager_id:
+            employee = EmployeeMaster.objects.filter(emp_id=obj.lob_deliverymanager_id).first()
+            return EmployeeMasterSerializer(employee).data if employee else None
+        return None
+
     class Meta:
         model = LOBMaster
-        fields = ['lob_id', 'lob_name']
+        fields = ['lob_id', 'lob_name', 'client_partner', 'delivery_manager']
+
 class InternalDepartmentMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = InternalDepartmentMaster
