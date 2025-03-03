@@ -34,7 +34,7 @@ class InternalDepartmentAPIView(APIView):
 class EmployeeByRoleAPIView(APIView):
     def get(self, request):
         # Get roles that match 'SPOC' and 'Delivery Manager'
-        roles = RoleMaster.objects.filter(rlm_name__in=["SPOC", "Delivery Manager"])
+        roles = RoleMaster.objects.filter(rlm_name__in=["SPOC", "Delivery Manager", "Client Partner"])
         
         response_data = {}
 
