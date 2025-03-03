@@ -26,13 +26,3 @@ class EmployeeRolesSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeMaster
         fields = ['emp_id', 'emp_name']
-
-class ClientPartnerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmployeeMaster
-        fields = ['emp_id', 'emp_name']
-
-class DeliveryManagerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmployeeMaster
-        fields = ['emp_id', 'emp_name']
