@@ -3,12 +3,9 @@ from rest_framework import viewsets
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 from hiringManagementTool.models.employees import EmployeeMaster
 from hiringManagementTool.components.employees.serializers import EmployeeMasterSerializer, EmployeeRolesSerializer
-from hiringManagementTool.components.employees.serializers import EmployeeMasterSerializer, ClientPartnerSerializer, DeliveryManagerSerializer
-from hiringManagementTool.models.roles import RoleMaster
-
+from rest_framework.decorators import api_view
 
 class EmployeeAPIView(ListCreateAPIView):
     queryset = EmployeeMaster.objects.all()
