@@ -7,9 +7,13 @@ from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
 from hiringManagementTool.components.demands.serializers import OpenDemandSerializer
 from hiringManagementTool.models.demandstatus import DemandStatusMaster
+from hiringManagementTool.models.departments import InternalDepartmentMaster
+from hiringManagementTool.models.locations import LocationMaster
 from .serializers import OpenDemandUpdateSerializer
 from datetime import datetime
 from django.db.models import Count, Q
+from hiringManagementTool.models.clients import ClientMaster
+from hiringManagementTool.models.lobs import LOBMaster
 
 class DemandAPIView(APIView):
     """Handles GET and POST requests for OpenDemand"""
@@ -47,12 +51,14 @@ class OpenDemandUpdateAPIView(APIView):
         dem_id = request.data.get("dem_id")
         dem_updateby_id = request.data.get("dem_updateby_id")
 
-        # At least one column should be provided for update
+        # Ensure that update_fields is initialized before use
         update_fields = {key: value for key, value in request.data.items() if key not in ["dem_id", "dem_updateby_id"]}
 
-        if not dem_id or not dem_updateby_id or not update_fields:
-            return Response({"error": "dem_id, dem_updateby_id, and at least one field to update are required."},
-                            status=status.HTTP_400_BAD_REQUEST)
+        if not dem_id or not dem_updateby_id:
+            return Response({"error": "dem_id and dem_updateby_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not update_fields:
+            return Response({"error": "At least one field must be provided for update."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             open_demand = OpenDemand.objects.get(dem_id=dem_id)
@@ -61,25 +67,43 @@ class OpenDemandUpdateAPIView(APIView):
             if "dem_dsm_id" in update_fields:
                 dsm_instance = DemandStatusMaster.objects.get(dsm_id=update_fields["dem_dsm_id"])
                 update_fields["dem_dsm_id"] = dsm_instance  # Assign instance, not integer
+            
+            # Handle ForeignKey field: Convert dem_clm_id to a ClientMaster instance
+            if "dem_clm_id" in update_fields:
+                clm_instance = ClientMaster.objects.get(clm_id=update_fields["dem_clm_id"])
+                update_fields["dem_clm_id"] = clm_instance  # Assign instance, not integer
 
-            # Update the fields
+            if "dem_lob_id" in update_fields:
+                lob_instance = LOBMaster.objects.get(lob_id=update_fields["dem_lob_id"])
+                update_fields["dem_lob_id"] = lob_instance  # Assign instance, not integer
+
+            if "dem_idm_id" in update_fields:
+                idm_instance = InternalDepartmentMaster.objects.get(idm_id=update_fields["dem_idm_id"])
+                update_fields["dem_idm_id"] = idm_instance  # Assign instance, not integer
+
+            if "dem_lcm_id" in update_fields:
+                lcm_instance = LocationMaster.objects.get(lcm_id=update_fields["dem_lcm_id"])
+                update_fields["dem_lcm_id"] = lcm_instance
+                
+            # Update fields dynamically
             for field, value in update_fields.items():
                 setattr(open_demand, field, value)
 
             open_demand.dem_updateby_id = dem_updateby_id
-            open_demand.dem_updatedate = datetime.now()  # Set the updated date
+            open_demand.dem_updatedate = datetime.now()
             open_demand.save()
 
             return Response({"message": "Demand updated successfully"}, status=status.HTTP_200_OK)
 
         except OpenDemand.DoesNotExist:
-            return Response({"error": "OpenDemand with the provided dem_id does not exist."},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "OpenDemand with the provided dem_id does not exist."}, status=status.HTTP_404_NOT_FOUND)
         except DemandStatusMaster.DoesNotExist:
-            return Response({"error": "Invalid dem_dsm_id: No such DemandStatusMaster found."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid dem_dsm_id: No such DemandStatusMaster found."}, status=status.HTTP_400_BAD_REQUEST)
+        except ClientMaster.DoesNotExist:
+            return Response({"error": "Invalid dem_clm_id: No such ClientMaster found."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         
 class FilterDemandsAPIView(APIView):
     def get(self, request):
