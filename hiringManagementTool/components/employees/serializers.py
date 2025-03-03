@@ -20,3 +20,13 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
         if obj.emp_lcm_id:  # emp_lcm_id is ForeignKey to LocationMaster(lcm_id)
             return obj.emp_lcm_id.lcm_name  
         return None  # If no location is assigned
+    
+class ClientPartnerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeMaster
+        fields = ['emp_id', 'emp_name']
+
+class DeliveryManagerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeMaster
+        fields = ['emp_id', 'emp_name']
