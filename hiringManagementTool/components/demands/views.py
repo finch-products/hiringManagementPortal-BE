@@ -9,7 +9,7 @@ from hiringManagementTool.components.demands.serializers import OpenDemandSerial
 from hiringManagementTool.models.demandstatus import DemandStatusMaster
 from hiringManagementTool.models.departments import InternalDepartmentMaster
 from hiringManagementTool.models.locations import LocationMaster
-from .serializers import OpenDemandUpdateSerializer
+from .serializers import OpenDemandUpdateSerializer, AllOpenDemandsIdSerializer
 from datetime import datetime
 from django.db.models import Count, Q
 from hiringManagementTool.models.clients import ClientMaster
@@ -38,14 +38,17 @@ class DemandAPIView(APIView):
         print("\n❌ Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class AllDemandsAPIView(APIView):
+    def get(self, request):
+        queryset = OpenDemand.objects.all()
+        serializer = AllOpenDemandsIdSerializer(queryset, many=True)
+        return Response(serializer.data)
+
 class DemandDetailAPIView(RetrieveUpdateAPIView):
     queryset = OpenDemand.objects.all()
     serializer_class = OpenDemandSerializer
     lookup_field = 'dem_id'
     lookup_url_kwarg = 'id'
-
-
-
 class OpenDemandUpdateAPIView(APIView):
     def patch(self, request, *args, **kwargs):
         dem_id = request.data.get("dem_id")

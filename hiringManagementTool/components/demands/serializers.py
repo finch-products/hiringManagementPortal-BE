@@ -51,7 +51,6 @@ class DemandStatusMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = DemandStatusMaster
         fields = ['dsm_id', 'dsm_code', 'dsm_description']
-
 class OpenDemandSerializer(serializers.ModelSerializer):
     client_details = ClientMasterSerializer(source='dem_clm_id', read_only=True)
     location_details = LocationMasterSerializer(source='dem_lcm_id', read_only=True)
@@ -92,3 +91,8 @@ class OpenDemandUpdateSerializer(serializers.ModelSerializer):
         model = OpenDemand
         fields = '__all__'
         extra_kwargs = {field: {"required": False, "allow_null": True} for field in fields}
+
+class AllOpenDemandsIdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OpenDemand
+        fields = ['dem_id']

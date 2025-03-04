@@ -17,7 +17,7 @@ class OpenDemand(models.Model):
     )
     dem_ctoolnumber = models.CharField(max_length=50, help_text="Client Tool Number from Client")
     dem_ctooldate = models.DateTimeField(help_text="Requirement/Demand Date from Client")
-    position_name = models.TextField(blank=True, null=True, help_text="Name of the position")
+    dem_position_name = models.TextField(blank=True, null=True, help_text="Name of the position")
     # dem_cmm_id = models.ForeignKey(
     #     'ClientManagerMaster',
     #     on_delete=models.CASCADE,
