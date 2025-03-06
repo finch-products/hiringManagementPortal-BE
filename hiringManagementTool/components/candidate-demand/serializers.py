@@ -6,6 +6,7 @@ from rest_framework import serializers
 class ClientSerializer(serializers.Serializer):
     clm_id = serializers.IntegerField(source='dem_clm_id.clm_id')
     clm_name = serializers.CharField(source='dem_clm_id.clm_name')
+    clm_managername = serializers.CharField(source='dem_clm_id.clm_managername')
 
 class LocationSerializer(serializers.Serializer):
     lcm_id = serializers.IntegerField(source='dem_lcm_id.lcm_id')
