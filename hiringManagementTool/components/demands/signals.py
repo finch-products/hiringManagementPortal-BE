@@ -17,7 +17,7 @@ def track_status_change(sender, instance, created, **kwargs):
     
     #fields to tracked for updates and dem_id not included .
     tracked_fields = [
-        'dem_ctoolnumber', 'dem_ctooldate', 'position_name', 'dem_clm_id', 'dem_lcm_id', 'dem_validtill', 'dem_skillset', 'dem_lob_id',
+        'dem_ctoolnumber', 'dem_ctooldate', 'dem_position_name', 'dem_clm_id', 'dem_lcm_id', 'dem_validtill', 'dem_skillset', 'dem_lob_id',
         'dem_idm_id', 'dem_dsm_id', 'dem_positions', 'dem_rrnumber', 'dem_jrnumber', 'dem_rrgade', 'dem_isactive',
         'dem_gcblevel', 'dem_assigned_to', 'dem_jd', 'dem_comment', 'dem_isreopened',
         'dem_insertdate', 'dem_insertby_id', 'dem_updatedate', 'dem_updateby_id'
@@ -26,7 +26,7 @@ def track_status_change(sender, instance, created, **kwargs):
     field_log_messages = {
     "dem_ctoolnumber": "Tool Number",
     "dem_ctooldate": "Tool Date",
-    "position_name": "Position Name",
+    "dem_position_name": "Position Name",
     "dem_clm_id": "Client ID",
     "dem_lcm_id": "LCM ID",
     "dem_validtill": "Valid Till Date",

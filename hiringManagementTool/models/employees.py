@@ -37,9 +37,9 @@ class EmployeeMaster(models.Model):
     emp_isactive = models.BooleanField(default=True, help_text="Indicates if the employee is active or not")
     emp_keyword = models.TextField(help_text="Keywords to find specific requirements")
     emp_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record creation timestamp")
-    emp_insertby = models.IntegerField(help_text="User ID who inserted the record (from connection table)")
+    emp_insertby = models.CharField( max_length=50,help_text="User ID who inserted the record (from connection table)")
     emp_updatedate = models.DateTimeField(auto_now=True, help_text="Last updated timestamp")
-    emp_updateby = models.IntegerField(null=True, blank=True, help_text="User ID who updated the record")
+    emp_updateby = models.CharField(null=True,  max_length=50, blank=True, help_text="User ID who updated the record")
 
     def save(self, *args, **kwargs):
      if not self.emp_id:

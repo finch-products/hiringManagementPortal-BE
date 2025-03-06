@@ -1,11 +1,18 @@
 from hiringManagementTool.models.clients import EmployeeMaster
+from hiringManagementTool.components.roles.serializers import RoleMasterSerializer
 from rest_framework import serializers
 
 class EmployeeMasterSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = EmployeeMaster
         fields = '__all__'
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['rlm_name'] = instance.emp_rlm_id.rlm_name if instance.emp_rlm_id else None  # Add name dynamically
+        data['lcm_name'] = instance.emp_lcm_id.lcm_name if instance.emp_lcm_id else None
+        return data
 
 class EmployeeDetailSerializer(serializers.ModelSerializer):
     """Serializer for Employee details with Location name."""
