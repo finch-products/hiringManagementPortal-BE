@@ -35,11 +35,11 @@ class DemandSerializer(serializers.ModelSerializer):
         fields = [
             'dem_id', 'client_details', 'location_details', 'lob_details',
             'department_details', 'status_details', 'dem_ctoolnumber', 
-            'dem_ctooldate', 'position_name', 'dem_validtill', 'dem_skillset', 
+            'dem_ctooldate', 'dem_position_name', 'dem_validtill', 'dem_skillset', 
             'dem_positions', 'dem_rrnumber', 'dem_jrnumber', 'dem_rrgade', 
             'dem_gcblevel', 'dem_jd', 'dem_comment', 'dem_isreopened', 
             'dem_isactive', 'dem_insertdate', 'dem_updatedate', 'dem_insertby', 
-            'dem_updateby'
+            'dem_updateby',
         ]
 
 class CandidateSerializer(serializers.ModelSerializer):
