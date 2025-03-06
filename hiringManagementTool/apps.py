@@ -7,3 +7,4 @@ class HiringmanagementtoolConfig(AppConfig):
 
     def ready(self):
         from hiringManagementTool.components.demands import signals
+        from hiringManagementTool.components.candidatedemand import signals

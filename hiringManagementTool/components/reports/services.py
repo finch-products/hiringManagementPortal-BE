@@ -213,3 +213,104 @@ def get_demand_data_by_description():
             'total': row[2]
         })
     return result
+
+def get_client_selection_percentage():
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            WITH ClientSelection AS (
+                SELECT 
+                    cm.clm_name AS client_name,  -- Fetch client name instead of generating "Client1", "Client2"
+                    COUNT(cdl.cdl_id) AS selected_candidates
+                FROM candidatedemandlink cdl
+                JOIN opendemand od ON cdl.cdl_dem_id = od.dem_id
+                JOIN candidatestatusmaster csm ON cdl.cdl_csm_id = csm.csm_id
+                JOIN clientmaster cm ON od.dem_clm_id = cm.clm_id  
+                WHERE csm.csm_id = 10  
+                GROUP BY cm.clm_name
+            ), 
+            TotalSelections AS (
+                SELECT SUM(selected_candidates) AS total_selected FROM ClientSelection
+            ) 
+            SELECT 
+                cs.client_name,  -- Return actual client name instead of generated "Client1"
+                ROUND((cs.selected_candidates * 100.0 / NULLIF(ts.total_selected, 0)), 2) AS selection_percentage
+            FROM ClientSelection cs
+            JOIN TotalSelections ts ON 1=1
+            ORDER BY cs.selected_candidates DESC;
+        """)
+        rows = cursor.fetchall()
+
+    result = []
+    for row in rows:
+        result.append({
+            'client_name': row[0],  # Fetch client name
+            'selection_percentage': float(row[1])  # Convert percentage to float
+        })
+    return result
+
+
+
+def get_time_taken_for_profile_submission():
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                od.dem_id AS demand,
+                DATEDIFF(
+                    (SELECT Min(cdh_insertdate) 
+                     FROM candidatedemandhistory 
+                     WHERE cdh_dem_id = od.dem_id 
+                     AND cdh_csm_id = 7),
+                    od.dem_insertdate
+                ) AS time_taken
+            FROM opendemand od
+            WHERE EXISTS (
+                SELECT 1 FROM candidatedemandhistory cdh 
+                WHERE cdh.cdh_dem_id = od.dem_id 
+                AND cdh.cdh_csm_id = 7
+            );
+        """)
+        rows = cursor.fetchall()
+
+    result = []
+    for row in rows:
+        result.append({
+            'demand_id': row[0],
+            'time_taken': row[1] if row[1] is not None else 0
+        })
+    
+    return result
+
+def get_average_time_taken_for_clients():
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                time_taken_sub.client,  
+                ROUND(AVG(time_taken_sub.time_taken)) AS avg_time_taken  -- Rounds to the nearest integer
+            FROM (
+                SELECT 
+                    cm.clm_name AS client,  
+                    od.dem_id AS demand_id,
+                    TIMESTAMPDIFF(DAY, 
+                        MIN(cdh.cdh_insertdate), 
+                        MAX(cdh.cdh_insertdate)
+                    ) AS time_taken
+                FROM candidatedemandhistory cdh
+                JOIN opendemand od ON cdh.cdh_dem_id = od.dem_id
+                JOIN candidatestatusmaster csm ON cdh.cdh_csm_id = csm.csm_id
+                JOIN clientmaster cm ON od.dem_clm_id = cm.clm_id
+                WHERE csm.csm_id IN (9, 13)
+                GROUP BY cm.clm_id, cm.clm_name, od.dem_id  
+                HAVING COUNT(DISTINCT csm.csm_id) = 2
+            ) AS time_taken_sub
+            GROUP BY time_taken_sub.client;
+        """)
+        rows = cursor.fetchall()
+
+    result = []
+    for row in rows:
+        result.append({
+            'client_name': row[0],
+            'time_taken': row[1] if row[1] is not None else 0
+        })
+    
+    return result

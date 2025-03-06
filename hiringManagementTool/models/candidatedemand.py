@@ -18,10 +18,9 @@ class CandidateDemandLink(models.Model):
     cdl_dem_id = models.ForeignKey(
         'OpenDemand',
         on_delete=models.CASCADE,
-        related_name="candidate_links",
-        db_column="cdl_dem_id",
-        to_field="dem_id",
-        help_text="Reference to Demand Table"
+        related_name="demand_links",  # Changed related_name
+        help_text="Reference to Open Demand",
+        db_column="cdl_dem_id"
     )
 
     cdl_csm_id = models.ForeignKey(
@@ -38,7 +37,7 @@ class CandidateDemandLink(models.Model):
     
     cdl_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record Creation Timestamp")
 
-    def __str__(self):
+    def _str_(self):
         return f"CDL-{self.cdl_id} | Candidate: {self.cdl_cdm.cdm_name} | Demand ID: {self.cdl_dem.dem_id}"
     
     class Meta:

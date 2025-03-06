@@ -2,9 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import json
 
-from .services import get_age_demand_data, get_open_demand_data, get_total_positions_opened_last_week, get_demand_fulfillment_metrics, get_lob_target_progress, get_demand_data_by_description
+from .services import get_age_demand_data, get_open_demand_data, get_total_positions_opened_last_week, get_demand_fulfillment_metrics, get_lob_target_progress, get_demand_data_by_description, get_client_selection_percentage, get_time_taken_for_profile_submission, get_average_time_taken_for_clients
 from .serializers import (
-    AgedemandReportSerializer, OpenDemandSerializer, TotalPositionsOpenedLastWeekSerializer, DemandFulfillmentMetricsSerializer, LobTargetProgressSerializer, DemandByStatusSerializer
+    AgedemandReportSerializer, OpenDemandSerializer, TotalPositionsOpenedLastWeekSerializer, DemandFulfillmentMetricsSerializer, LobTargetProgressSerializer, DemandByStatusSerializer, ClientSelectionPercentageSerializer, demandTimeTakenSerializer, AverageTimeTakenbyClientsSerializer
 
 )
 
@@ -73,3 +73,27 @@ class DemandByStatusView(APIView):
             })
 
         return Response({"data": formatted_data})
+    
+class ClientSelectionPercentageView(APIView):
+    """
+    API view to fetch client selection percentage data.
+    """
+    def get(self, request, format=None):
+        data = get_client_selection_percentage()
+      
+        serializer = ClientSelectionPercentageSerializer(data, many=True)
+        return Response(serializer.data, status=200)
+    
+class TimeTakenForProfileSubmissionView(APIView):
+    def get(self, request, format=None):
+     
+     data = get_time_taken_for_profile_submission()
+     serializer = demandTimeTakenSerializer(data, many=True)
+     return Response(serializer.data, status=200)
+
+class TimeTakenFromInterviewToFeedbackView(APIView):
+    def get(self, request, format=None):
+     
+     data = get_average_time_taken_for_clients()
+     serializer = AverageTimeTakenbyClientsSerializer(data, many=True)
+     return Response(serializer.data, status=200)
