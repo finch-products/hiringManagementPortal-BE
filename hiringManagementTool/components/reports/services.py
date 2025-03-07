@@ -253,21 +253,13 @@ def get_client_selection_percentage():
 def get_time_taken_for_profile_submission():
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT 
-                od.dem_id AS demand,
-                DATEDIFF(
-                    (SELECT Min(cdh_insertdate) 
-                     FROM candidatedemandhistory 
-                     WHERE cdh_dem_id = od.dem_id 
-                     AND cdh_csm_id = 7),
-                    od.dem_insertdate
-                ) AS time_taken
-            FROM opendemand od
-            WHERE EXISTS (
-                SELECT 1 FROM candidatedemandhistory cdh 
-                WHERE cdh.cdh_dem_id = od.dem_id 
-                AND cdh.cdh_csm_id = 7
-            );
+        SELECT 
+        od.dem_id AS demand_id,
+        ROUND(AVG(DATEDIFF(cdh.cdh_insertdate, od.dem_insertdate))) AS avg_time_taken
+    FROM opendemand od
+    JOIN candidatedemandhistory cdh ON od.dem_id = cdh.cdh_dem_id
+    WHERE cdh.cdh_csm_id = 7  -- Considering candidates who applied (status 7)
+    GROUP BY od.dem_id;
         """)
         rows = cursor.fetchall()
 
