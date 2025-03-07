@@ -6,16 +6,22 @@ from hiringManagementTool.models.employees import EmployeeMaster
 class ClientMaster(models.Model):
     # Fields based on the "clientmaster" table definition and FE fields.
     clm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto Increment)")
-    clm_clientid = models.CharField(max_length=50, unique=True, help_text="Client unique ID (internal, manually inserted)")
+    clm_clientid = models.CharField(max_length=50, unique=True,blank=True, 
+        null=True,  help_text="Client unique ID (internal, manually inserted)")
     clm_name = models.CharField(max_length=50, help_text="Client Name")
-    clm_managername = models.CharField(max_length=50, help_text="Client Manager Name")
-    clm_clientemail = models.EmailField(unique=True, help_text="Client Email Address")
-    clm_clientphone = models.CharField(max_length=20, help_text="Client Phone Number (e.g., +91-9988770098)")
-    clm_address = models.TextField(help_text="Client Full Address")
+    clm_managername = models.CharField(max_length=50,blank=True,  
+        null=True,  help_text="Client Manager Name")
+    clm_clientemail = models.EmailField(unique=True,blank=True,  
+        null=True, help_text="Client Email Address")
+    clm_clientphone = models.CharField(max_length=20,blank=True,  
+        null=True, help_text="Client Phone Number (e.g., +91-9988770098)")
+    clm_address = models.TextField(blank=True,  
+        null=True,help_text="Client Full Address")
     clm_lcm_id = models.ForeignKey(
         'LocationMaster',
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,   
         related_name="location_client",
         db_column="clm_lcm_id",
         help_text="Reference to Location Master Table"
