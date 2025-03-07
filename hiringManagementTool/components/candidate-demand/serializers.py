@@ -2,6 +2,9 @@ from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
 from hiringManagementTool.models.candidates import CandidateMaster
 from rest_framework import serializers
+from hiringManagementTool.models.employees import EmployeeMaster
+from hiringManagementTool.models.lobs import LOBMaster
+from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
 
 class ClientSerializer(serializers.Serializer):
     clm_id = serializers.IntegerField(source='dem_clm_id.clm_id')
@@ -12,9 +15,33 @@ class LocationSerializer(serializers.Serializer):
     lcm_id = serializers.IntegerField(source='dem_lcm_id.lcm_id')
     lcm_name = serializers.CharField(source='dem_lcm_id.lcm_name')
 
+
+class EmployeeMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeMaster
+        fields = ['emp_id', 'emp_name']
+
 class LOBSerializer(serializers.Serializer):
     lob_id = serializers.IntegerField(source='dem_lob_id.lob_id')
     lob_name = serializers.CharField(source='dem_lob_id.lob_name')
+    client_partner = serializers.SerializerMethodField()
+    delivery_manager = serializers.SerializerMethodField()
+
+    def get_client_partner(self, obj):
+        if obj.dem_lob_id and obj.dem_lob_id.lob_clientpartner_id:
+            employee = EmployeeMaster.objects.filter(emp_id=obj.dem_lob_id.lob_clientpartner_id).first()
+            return EmployeeMasterSerializer(employee).data if employee else None
+        return None
+
+    def get_delivery_manager(self, obj):
+        if obj.dem_lob_id and obj.dem_lob_id.lob_deliverymanager_id:
+            employee = EmployeeMaster.objects.filter(emp_id=obj.dem_lob_id.lob_deliverymanager_id).first()
+            return EmployeeMasterSerializer(employee).data if employee else None
+        return None
+    
+    class Meta:
+        model = LOBMaster
+        fields = ['lob_id', 'lob_name', 'client_partner', 'delivery_manager']
 
 class DepartmentSerializer(serializers.Serializer):
     idm_id = serializers.IntegerField(source='dem_idm_id.idm_id')
@@ -24,13 +51,13 @@ class StatusSerializer(serializers.Serializer):
     dsm_id = serializers.IntegerField(source='dem_dsm_id.dsm_id')
     dsm_code = serializers.CharField(source='dem_dsm_id.dsm_code')
     dsm_description = serializers.CharField(source='dem_dsm_id.dsm_description')
+
 class DemandSerializer(serializers.ModelSerializer):
     client_details = ClientSerializer(source='*')
     location_details = LocationSerializer(source='*')
     lob_details = LOBSerializer(source='*')
     department_details = DepartmentSerializer(source='*')
     status_details = StatusSerializer(source='*')
-
     class Meta:
         model = OpenDemand
         fields = [
@@ -40,10 +67,16 @@ class DemandSerializer(serializers.ModelSerializer):
             'dem_positions', 'dem_rrnumber', 'dem_jrnumber', 'dem_rrgade', 
             'dem_gcblevel', 'dem_jd', 'dem_comment', 'dem_isreopened', 
             'dem_isactive', 'dem_insertdate', 'dem_updatedate', 'dem_insertby', 
-            'dem_updateby',
+            'dem_updateby'
         ]
 
+class CandidateStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CandidateStatusMaster
+        fields = ["csm_id", "csm_code"]
+
 class CandidateSerializer(serializers.ModelSerializer):
+    candidate_status = CandidateStatusSerializer(source='cdl_csm_id', read_only=True)
     name = serializers.CharField(source='cdl_cdm_id.cdm_name')
     email = serializers.EmailField(source='cdl_cdm_id.cdm_email')
     phone = serializers.CharField(source='cdl_cdm_id.cdm_phone')
@@ -57,7 +90,7 @@ class CandidateSerializer(serializers.ModelSerializer):
         fields = [
             'cdl_id', 'cdl_cdm_id', 'name', 'email', 'phone', 
             'location_id', 'location_name', 'description', 
-            'keywords', 'cdl_joiningdate', 'cdl_insertdate'
+            'keywords', 'cdl_joiningdate', 'cdl_insertdate', 'candidate_status'
         ]
 
     def get_location_id(self, obj):
