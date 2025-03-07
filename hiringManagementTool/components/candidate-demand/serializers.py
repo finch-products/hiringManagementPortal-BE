@@ -47,8 +47,8 @@ class CandidateSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='cdl_cdm_id.cdm_name')
     email = serializers.EmailField(source='cdl_cdm_id.cdm_email')
     phone = serializers.CharField(source='cdl_cdm_id.cdm_phone')
-    location_id = serializers.IntegerField(source='cdl_cdm_id.cdm_location.lcm_id')
-    location_name = serializers.CharField(source='cdl_cdm_id.cdm_location.lcm_name')
+    location_id = serializers.SerializerMethodField()
+    location_name = serializers.SerializerMethodField()
     description = serializers.CharField(source='cdl_cdm_id.cdm_description')
     keywords = serializers.CharField(source='cdl_cdm_id.cdm_keywords')
 
@@ -59,6 +59,19 @@ class CandidateSerializer(serializers.ModelSerializer):
             'location_id', 'location_name', 'description', 
             'keywords', 'cdl_joiningdate', 'cdl_insertdate'
         ]
+
+    def get_location_id(self, obj):
+        """Handle None values for location_id"""
+        if obj.cdl_cdm_id and obj.cdl_cdm_id.cdm_location:
+            return obj.cdl_cdm_id.cdm_location.lcm_id
+        return None  # Return None if no location
+
+    def get_location_name(self, obj):
+        """Handle None values for location_name"""
+        if obj.cdl_cdm_id and obj.cdl_cdm_id.cdm_location:
+            return obj.cdl_cdm_id.cdm_location.lcm_name
+        return None  # Return None if no location
+
 
 class OpenDemandResponseSerializer(serializers.Serializer):
     cdl_dem_id = serializers.CharField()
