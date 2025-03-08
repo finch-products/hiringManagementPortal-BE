@@ -9,4 +9,4 @@ class DemandStatusDetailsSerializer(serializers.ModelSerializer):
 class DemandStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = DemandStatusMaster
-        fields = ['dsm_code']
+        fields = ['dsm_id', 'dsm_code', 'dsm_description']
