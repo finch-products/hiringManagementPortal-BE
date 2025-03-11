@@ -1,4 +1,6 @@
 from django.db import connection
+import calendar
+from django.http import JsonResponse
 
 def get_age_demand_data():
     with connection.cursor() as cursor:
@@ -306,3 +308,270 @@ def get_average_time_taken_for_clients():
         })
     
     return result
+
+
+def generate_report(request):
+    year = request.GET.get("year")
+    month = request.GET.get("month")
+    report_type = request.GET.get("reportType")
+
+    if not year or not year.isdigit():
+        return JsonResponse({"error": "Year parameter is required and must be a valid number."}, status=400)
+
+    year = int(year)
+    if month:
+        if not month.isdigit() or int(month) not in range(1, 13):
+            return JsonResponse({"error": "Invalid month provided."}, status=400)
+        month = int(month)
+
+    # For custom report, extract start_date and end_date
+    if report_type == "custom":
+        start_date = request.GET.get("start_date")
+        end_date = request.GET.get("end_date")
+        if not start_date or not end_date:
+            return JsonResponse({"error": "start_date and end_date are required for custom reports."}, status=400)
+        data = fetch_report_data(year, month, report_type, start_date, end_date)
+    else:
+        data = fetch_report_data(year, month, report_type)
+
+    return JsonResponse(data)
+
+def fetch_report_data(report_type, year=None, month=None, start_date=None, end_date=None):
+    """
+    Returns report data based on the report type.
+    For custom reports, only start_date and end_date are required.
+    For standard reports (weekly, monthly, quarterly, yearly), year (and month for weekly) are required.
+    """
+    if report_type == "custom":
+        # Custom report based on date range
+        custom_data = get_custom_data(start_date, end_date)
+        return {
+            "Date range": f"{start_date} to {end_date}",
+            "report": {"Custom": custom_data}
+        }
+    else:
+        report = {}
+        # Standard report types
+        if report_type in [None, "weekly"]:
+            if month is None:
+                return {"error": "Month is required for weekly reports."}
+            report["weeklyClientSelects"] = get_weekly_data(year, month)
+
+        if report_type in [None, "monthly"]:
+            report["monthlyClientSelects"] = get_monthly_data(year)
+
+        if report_type in [None, "quarterly"]:
+            report["quarterlyClientSelects"] = get_quarterly_data(year)
+
+        if report_type in [None, "yearly"]:
+            report["yearlyClientSelects"] = get_yearly_data(year)
+
+        return {"year": year, "report": report}
+
+def execute_sql_query(query):
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        return cursor.fetchall()
+
+def get_weekly_data(year, month):
+    """
+    Fetches weekly client selection data and ensures all weeks in the month are included.
+    If no data is available, returns a default structure with week1, week2, etc., all set to 0.
+    """
+    # Get the month calendar (list of weeks; each week is a list of 7 days)
+    month_weeks = calendar.monthcalendar(year, month)
+    # Determine the number of weeks with at least one non-zero day (i.e. valid weeks)
+    total_weeks = sum(1 for week in month_weeks if any(day != 0 for day in week))
+
+    sql_query = f"""
+        SELECT 
+            lm.lob_name AS lob,
+            emp_cp.emp_name AS clientPartner,
+            emp_dm.emp_name AS deliveryManager,
+            WEEK(cdl.cdl_insertdate, 3) - WEEK(DATE_SUB(cdl.cdl_insertdate, INTERVAL DAYOFMONTH(cdl.cdl_insertdate)-1 DAY), 3) + 1 AS week_number, 
+            COUNT(*) AS count
+        FROM candidatedemandlink cdl
+        JOIN opendemand od ON cdl.cdl_dem_id = od.dem_id
+        JOIN lobmaster lm ON od.dem_lob_id = lm.lob_id
+        JOIN employeemaster emp_cp ON lm.lob_clientpartner_id = emp_cp.emp_id
+        JOIN employeemaster emp_dm ON lm.lob_deliverymanager_id = emp_dm.emp_id
+        WHERE YEAR(cdl.cdl_insertdate) = {year} 
+          AND MONTH(cdl.cdl_insertdate) = {month}
+          AND cdl.cdl_csm_id = 10
+        GROUP BY lm.lob_name, clientPartner, deliveryManager, week_number;
+    """
+    
+    rows = execute_sql_query(sql_query)
+    results = {}
+    
+    for row in rows:
+        lob, clientPartner, deliveryManager, week_number, count = row[:5]
+        key = (lob, clientPartner, deliveryManager)
+        if key not in results:
+            results[key] = {
+                "lob": lob,
+                "clientPartner": clientPartner,
+                "deliveryManager": deliveryManager,
+                **{f"week{i}": 0 for i in range(1, total_weeks + 1)}
+            }
+        if 1 <= week_number <= total_weeks:
+            results[key][f"week{week_number}"] = count
+
+    # If no data exists, return a default structure with empty strings for group keys.
+    if not results:
+        default_result = {
+            "lob": "",
+            "clientPartner": "",
+            "deliveryManager": "",
+            **{f"week{i}": 0 for i in range(1, total_weeks + 1)}
+        }
+        return [default_result]
+    
+    return list(results.values())
+
+
+def get_monthly_data(year):
+    """
+    Ensures all 12 months (Jan-Dec) are included in the report, grouping by LOB, Client Partner, and Delivery Manager.
+    """
+    sql_query = f"""
+        SELECT 
+            lm.lob_name AS lob,
+            emp_cp.emp_name AS clientPartner,
+            emp_dm.emp_name AS deliveryManager,
+            MONTH(cdl.cdl_insertdate) AS month_num, 
+            COUNT(*) AS count
+        FROM candidatedemandlink cdl
+        JOIN opendemand od ON cdl.cdl_dem_id = od.dem_id
+        JOIN lobmaster lm ON od.dem_lob_id = lm.lob_id
+        JOIN employeemaster emp_cp ON lm.lob_clientpartner_id = emp_cp.emp_id
+        JOIN employeemaster emp_dm ON lm.lob_deliverymanager_id = emp_dm.emp_id
+        WHERE YEAR(cdl.cdl_insertdate) = {year}
+          AND cdl.cdl_csm_id = 10
+        GROUP BY lm.lob_name, clientPartner, deliveryManager, month_num
+        ORDER BY lm.lob_name, clientPartner, deliveryManager, month_num;
+    """
+
+    rows = execute_sql_query(sql_query)
+    results = {}
+    
+    for row in rows:
+        lob, clientPartner, deliveryManager, month_num, count = row[:5]
+        if month_num is None or not (1 <= month_num <= 12):
+            continue
+
+        key = (lob, clientPartner, deliveryManager)
+        if key not in results:
+            results[key] = {
+                "lob": lob,
+                "clientPartner": clientPartner,
+                "deliveryManager": deliveryManager,
+                **{calendar.month_name[i]: 0 for i in range(1, 13)}
+            }
+        results[key][calendar.month_name[month_num]] = count
+    
+    return list(results.values())
+
+def get_quarterly_data(year):
+    """
+    Ensures all 4 quarters (Q1-Q4) are included in the report.
+    """
+    sql_query = f"""
+        SELECT 
+            lm.lob_name AS lob,
+            emp_cp.emp_name AS clientPartner,
+            emp_dm.emp_name AS deliveryManager,
+            QUARTER(cdl.cdl_insertdate) AS quarter,
+            COUNT(*) AS count
+        FROM candidatedemandlink cdl
+        JOIN opendemand od ON cdl.cdl_dem_id = od.dem_id
+        JOIN lobmaster lm ON od.dem_lob_id = lm.lob_id
+        JOIN employeemaster emp_cp ON lm.lob_clientpartner_id = emp_cp.emp_id
+        JOIN employeemaster emp_dm ON lm.lob_deliverymanager_id = emp_dm.emp_id
+        WHERE YEAR(cdl.cdl_insertdate) = {year}
+          AND cdl.cdl_csm_id = 10
+        GROUP BY lm.lob_name, clientPartner, deliveryManager, quarter
+        ORDER BY quarter;
+    """
+    
+    rows = execute_sql_query(sql_query)
+    results = {}
+    
+    for row in rows:
+        lob, clientPartner, deliveryManager, quarter, count = row[:5]
+        key = (lob, clientPartner, deliveryManager)
+        if key not in results:
+            results[key] = {
+                "lob": lob,
+                "clientPartner": clientPartner,
+                "deliveryManager": deliveryManager,
+                "Q1": 0, "Q2": 0, "Q3": 0, "Q4": 0
+            }
+        results[key][f"Q{quarter}"] = count
+
+    return list(results.values())
+
+def get_yearly_data(year):
+    """
+    Returns the total count for the year per LOB, client partner, and delivery manager.
+    """
+    sql_query = f"""
+        SELECT 
+            lm.lob_name AS lob,
+            emp_cp.emp_name AS clientPartner,
+            emp_dm.emp_name AS deliveryManager,
+            COUNT(*) AS total_count
+        FROM candidatedemandlink cdl
+        JOIN opendemand od ON cdl.cdl_dem_id = od.dem_id
+        JOIN lobmaster lm ON od.dem_lob_id = lm.lob_id
+        JOIN employeemaster emp_cp ON lm.lob_clientpartner_id = emp_cp.emp_id
+        JOIN employeemaster emp_dm ON lm.lob_deliverymanager_id = emp_dm.emp_id
+        WHERE YEAR(cdl.cdl_insertdate) = {year}
+          AND cdl.cdl_csm_id = 10
+        GROUP BY lm.lob_name, clientPartner, deliveryManager;
+    """
+    
+    rows = execute_sql_query(sql_query)
+    results = []
+    for row in rows:
+        lob, clientPartner, deliveryManager, total_count = row[:4]
+        results.append({
+            "lob": lob,
+            "clientPartner": clientPartner,
+            "deliveryManager": deliveryManager,
+            "totalCount": total_count
+        })
+    return results
+
+def get_custom_data(start_date, end_date):
+    """
+    Returns the custom report based on the provided date range.
+    Expected date format in the query parameters should match your DB format, e.g., 'YYYY-MM-DD' or 'DD-MM-YYYY' as needed.
+    """
+    sql_query = f"""
+        SELECT 
+            lm.lob_name AS lob,
+            emp_cp.emp_name AS clientPartner,
+            emp_dm.emp_name AS deliveryManager,
+            COUNT(*) AS total_count
+        FROM candidatedemandlink cdl
+        JOIN opendemand od ON cdl.cdl_dem_id = od.dem_id
+        JOIN lobmaster lm ON od.dem_lob_id = lm.lob_id
+        JOIN employeemaster emp_cp ON lm.lob_clientpartner_id = emp_cp.emp_id
+        JOIN employeemaster emp_dm ON lm.lob_deliverymanager_id = emp_dm.emp_id
+        WHERE cdl.cdl_insertdate BETWEEN '{start_date}' AND '{end_date}'
+          AND cdl.cdl_csm_id = 10
+        GROUP BY lm.lob_name, clientPartner, deliveryManager;
+    """
+    
+    rows = execute_sql_query(sql_query)
+    results = []
+    for row in rows:
+        lob, clientPartner, deliveryManager, total_count = row[:4]
+        results.append({
+            "lob": lob,
+            "clientPartner": clientPartner,
+            "deliveryManager": deliveryManager,
+            "totalCount": total_count
+        })
+    return results
