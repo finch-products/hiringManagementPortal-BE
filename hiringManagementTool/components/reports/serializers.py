@@ -39,3 +39,7 @@ class demandTimeTakenSerializer(serializers.Serializer):
 class AverageTimeTakenbyClientsSerializer(serializers.Serializer):
     client_name = serializers.CharField()
     time_taken = serializers.IntegerField()
+
+class ReportSerializer(serializers.Serializer):
+    year = serializers.IntegerField()
+    report = serializers.DictField()
