@@ -106,10 +106,65 @@ class CandidateSerializer(serializers.ModelSerializer):
         return None  # Return None if no location
 
 
+class CandidateMasterSerializer(serializers.ModelSerializer):
+    cdl_id = serializers.SerializerMethodField()
+    cdl_cdm_id = serializers.CharField(source='cdm_id')
+    cdl_joiningdate = serializers.SerializerMethodField()
+    cdl_insertdate = serializers.SerializerMethodField()
+    candidate_status = serializers.SerializerMethodField()
+    location_id = serializers.SerializerMethodField()
+    location_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CandidateMaster
+        fields = [
+            'cdl_id', 'cdl_cdm_id', 'cdm_name', 'cdm_email', 'cdm_phone', 
+            'location_id', 'location_name', 'cdm_description', 
+            'cdm_keywords', 'cdl_joiningdate', 'cdl_insertdate', 'candidate_status'
+        ]
+
+    def get_cdl_id(self, obj):
+        # Check if the candidate is linked to any demand
+        linked_demand = CandidateDemandLink.objects.filter(cdl_cdm_id=obj).first()
+        return linked_demand.cdl_id if linked_demand else None
+
+    def get_cdl_joiningdate(self, obj):
+        # Check if the candidate is linked to any demand
+        linked_demand = CandidateDemandLink.objects.filter(cdl_cdm_id=obj).first()
+        return linked_demand.cdl_joiningdate if linked_demand else None
+
+    def get_cdl_insertdate(self, obj):
+        # Check if the candidate is linked to any demand
+        linked_demand = CandidateDemandLink.objects.filter(cdl_cdm_id=obj).first()
+        return linked_demand.cdl_insertdate if linked_demand else None
+
+    def get_candidate_status(self, obj):
+        # Check if the candidate is linked to any demand
+        linked_demand = CandidateDemandLink.objects.filter(cdl_cdm_id=obj).first()
+        if linked_demand and linked_demand.cdl_csm_id:
+            return CandidateStatusSerializer(linked_demand.cdl_csm_id).data
+        return None
+
+    def get_location_id(self, obj):
+        if obj.cdm_location:
+            return obj.cdm_location.lcm_id
+        return None
+
+    def get_location_name(self, obj):
+        if obj.cdm_location:
+            return obj.cdm_location.lcm_name
+        return None
+
 class OpenDemandResponseSerializer(serializers.Serializer):
     cdl_dem_id = serializers.CharField()
     demand_details = DemandSerializer()
-    candidates = CandidateSerializer(many=True)
+    candidates = CandidateSerializer(many=True) 
+
+
+class NonlinkedResponseSerializer(serializers.Serializer):
+    cdl_dem_id = serializers.CharField()
+    demand_details = DemandSerializer()
+    candidates_not_added = CandidateMasterSerializer(many=True) 
 
 from rest_framework import serializers
 from hiringManagementTool.models.candidates import CandidateMaster
