@@ -60,7 +60,7 @@ class OpenDemandSerializer(serializers.ModelSerializer):
 
     dem_clm_id = serializers.PrimaryKeyRelatedField(queryset=ClientMaster.objects.all(), write_only=True)
     dem_lcm_id = serializers.PrimaryKeyRelatedField(queryset=LocationMaster.objects.all(), write_only=True, required=False)
-    dem_lob_id = serializers.PrimaryKeyRelatedField(queryset=LOBMaster.objects.all(), write_only=True, required=False)
+    dem_lob_id = serializers.PrimaryKeyRelatedField(queryset=LOBMaster.objects.all(), write_only=True, required=True)
     dem_idm_id = serializers.PrimaryKeyRelatedField(queryset=InternalDepartmentMaster.objects.all(), write_only=True, required=False)
     dem_dsm_id = serializers.PrimaryKeyRelatedField(queryset=DemandStatusMaster.objects.all(), write_only=True, required=False)  # ✅ FIXED
     
