@@ -43,3 +43,8 @@ class AverageTimeTakenbyClientsSerializer(serializers.Serializer):
 class ReportSerializer(serializers.Serializer):
     year = serializers.IntegerField()
     report = serializers.DictField()
+
+class OpenPositionSerializer(serializers.Serializer):
+    department_name = serializers.CharField()
+    lob_name = serializers.CharField()
+    open_positions = serializers.IntegerField()

@@ -575,3 +575,35 @@ def get_custom_data(start_date, end_date):
             "totalCount": total_count
         })
     return results
+
+def get_open_positions_by_department_lob():
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+    COALESCE(idm.idm_unitname, 'Unknown') AS department_name,
+    COALESCE(lob.lob_name, 'Unknown') AS lob_name,
+    COUNT(op.dem_id) AS open_positions
+FROM 
+    opendemand op
+LEFT JOIN 
+    lobmaster lob ON op.dem_lob_id = lob.lob_id
+LEFT JOIN 
+    internaldepartmentmaster idm ON op.dem_idm_id = idm.idm_id
+WHERE 
+    op.dem_isactive = 1
+GROUP BY 
+    idm.idm_unitname, lob.lob_name
+ORDER BY 
+    open_positions DESC;
+
+        """)
+        rows = cursor.fetchall()
+
+    result = []
+    for row in rows:
+        result.append({
+            'department_name': row[0],
+            'lob_name': row[1],
+            'open_positions': row[2]
+        })
+    return result
