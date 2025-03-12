@@ -1,3 +1,4 @@
+import re
 from django.db import models
 from .clients import ClientMaster
 from .locations import LocationMaster
@@ -107,31 +108,53 @@ class OpenDemand(models.Model):
     )
 
     def save(self, *args, **kwargs):
-     if not self.dem_id:
-        today = datetime.today().strftime('%d%m%Y')
-        
-        # Get the highest numeric suffix for today's date
-        latest_entry = OpenDemand.objects.filter(dem_id__startswith=f"dem_{today}_").aggregate(
-            max_id=Max("dem_id")
-        )
+        if not self.dem_id:
+            today = datetime.today().strftime('%d%m%Y')
 
-        if latest_entry["max_id"]:
-            try:
-                last_number = int(latest_entry["max_id"].rsplit("_", 1)[-1])  # Extract numeric suffix
-                new_number = last_number + 1
-            except ValueError:
-                new_number = 1  # Handle unexpected format issues
-        else:
-            new_number = 1  # Start numbering from 1
+            # Fetch all demand IDs for today and extract numeric suffixes
+            existing_ids = OpenDemand.objects.filter(dem_id__startswith=f"dem_{today}_").values_list("dem_id", flat=True)
 
-        self.dem_id = f"dem_{today}_{new_number}"  # No zero-padding, keeps numeric order
+            # Extract numeric suffixes safely
+            numeric_suffixes = [int(re.search(r"_(\d+)$", dem_id).group(1)) for dem_id in existing_ids if re.search(r"_(\d+)$", dem_id)]
 
-     super().save(*args, **kwargs)
+            new_number = max(numeric_suffixes, default=0) + 1  # Get the next number
+
+            self.dem_id = f"dem_{today}_{new_number}"
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Demand {self.dem_ctoolnumber} - {self.dem_positions} Positions"
-    
+
     class Meta:
         managed = True
-        db_table = 'opendemand'
+        db_table = "opendemand"
+
+    # def save(self, *args, **kwargs):
+    #  if not self.dem_id:
+    #     today = datetime.today().strftime('%d%m%Y')
+        
+    #     latest_entry = OpenDemand.objects.filter(dem_id__startswith=f"dem_{today}_").aggregate(
+    #         max_id=Max("dem_id")
+    #     )
+
+    #     if latest_entry["max_id"]:
+    #         try:
+    #             last_number = int(latest_entry["max_id"].rsplit("_", 1)[-1]) 
+    #             new_number = last_number + 1
+    #         except ValueError:
+    #             new_number = 1 
+    #     else:
+    #         new_number = 1 
+
+    #     self.dem_id = f"dem_{today}_{new_number}"
+
+    #  super().save(*args, **kwargs)
+
+    # def __str__(self):
+    #     return f"Demand {self.dem_ctoolnumber} - {self.dem_positions} Positions"
+    
+    # class Meta:
+    #     managed = True
+    #     db_table = 'opendemand'
 
