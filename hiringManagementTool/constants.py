@@ -22,4 +22,23 @@ DEMAND_STATUS = {
     "CLOSED": "Closed",
     "EXTERNAL_HIRING": "External Hiring",
     "CANDIDATE_SCREENING": "Candidate Screening",
-} 
+    "REJECTED": "Rejected",
+    "CLIENT_FEEDBACK_AWAITED": "Client Feedback Awaited",
+    "ON_HOLD": "On Hold",
+}
+
+CANDIDATE_STATUS = {
+    "APPLIED": "Applied",
+    "SCREENING": "Screening",
+    "SHORTLISTED": "Shortlisted",
+    "INTERVIEW_SCHEDULED": "Interview Scheduled",
+    "L1_SCHEDULED": "L1 Scheduled",
+    "L1_REJECTED": "L1 Rejected",
+    "SENT_TO_CLIENT": "Sent to Client",
+    "CLIENT_EVALUATION_PENDING": "Client Evaluation Pending",
+    "CLIENT_INTERVIEW_SCHEDULED": "Client Interview Scheduled",
+    "SELECTED_BY_CLIENT": "Selected by Client",
+    "REJECTED_BY_CLIENT": "Rejected by Client",
+    "ON_HOLD": "On Hold",
+    "CLIENT_FEEDBACK_PROVIDED": "Client Feedback Provided",
+}
