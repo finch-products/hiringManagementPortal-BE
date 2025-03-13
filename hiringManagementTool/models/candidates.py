@@ -63,31 +63,29 @@ class CandidateMaster(models.Model):
 
     cdm_isinternal = models.BooleanField(default=False, help_text="1 for internal candidate, 0 for external")
     cdm_isactive = models.BooleanField(default=True, help_text="1 for active, 0 for inactive")
-
+    cdm_comment = models.TextField(blank=True, null=True, help_text="Comment Entry")
     def save(self, *args, **kwargs):
+    # Only generate a new cdm_id if this is a new record
         if not self.cdm_id:
-         today = datetime.today().strftime('%d%m%Y')
-        
-        # Get the max numeric suffix
-        latest_entry = CandidateMaster.objects.filter(cdm_id__startswith=f"cdm_{today}_").aggregate(
-            max_id=Max("cdm_id")
-        )
+            today = datetime.today().strftime('%d%m%Y')
+            
+            # Get the max numeric suffix
+            latest_entry = CandidateMaster.objects.filter(cdm_id__startswith=f"cdm_{today}_").aggregate(
+                max_id=Max("cdm_id")
+            )
 
-        if latest_entry["max_id"]:
-            try:
-                last_number = int(latest_entry["max_id"].rsplit("_", 1)[-1])  # Extract last numeric part
-                new_number = last_number + 1
-            except ValueError:
-                new_number = 1  # Handle edge cases where ID format is incorrect
-        else:
-            new_number = 1  # Start from 1
+            if latest_entry["max_id"]:
+                try:
+                    last_number = int(latest_entry["max_id"].rsplit("_", 1)[-1])  # Extract last numeric part
+                    new_number = last_number + 1
+                except ValueError:
+                    new_number = 1  # Handle edge cases where ID format is incorrect
+            else:
+                new_number = 1  # Start from 1
 
-        self.cdm_id = f"cdm_{today}_{new_number}"  # No zero-padding, pure integer sorting
+            self.cdm_id = f"cdm_{today}_{new_number}"  # No zero-padding, pure integer sorting
 
         super().save(*args, **kwargs)
-    
-    def __str__(self):
-        return f"{self.cdm_name} ({'Internal' if self.cdm_isinternal else 'External'})"
     
     class Meta:
         managed = True
