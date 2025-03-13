@@ -8,3 +8,5 @@ urlpatterns = [
     path('update-demand-status/', OpenDemandUpdateAPIView.as_view(), name='update-demand-status'),
     path('filter/', FilterDemandsAPIView.as_view(), name='filter-demands'),
 ]
+
+

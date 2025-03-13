@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 import json
 
-from .services import get_age_demand_data, get_open_demand_data, get_total_positions_opened_last_week, get_demand_fulfillment_metrics, get_lob_target_progress, get_demand_data_by_description, get_client_selection_percentage, get_time_taken_for_profile_submission, get_average_time_taken_for_clients, fetch_report_data
+from .services import get_age_demand_data, get_open_demand_data, get_total_positions_opened_last_week, get_demand_fulfillment_metrics, get_lob_target_progress, get_demand_data_by_description, get_client_selection_percentage, get_time_taken_for_profile_submission, get_average_time_taken_for_interviewtofeedback, fetch_report_data
 from .serializers import (
     AgedemandReportSerializer, OpenDemandSerializer, TotalPositionsOpenedLastWeekSerializer, DemandFulfillmentMetricsSerializer, LobTargetProgressSerializer, DemandByStatusSerializer, ClientSelectionPercentageSerializer, demandTimeTakenSerializer, AverageTimeTakenbyClientsSerializer, ReportSerializer
 
@@ -95,7 +95,7 @@ class TimeTakenForProfileSubmissionView(APIView):
 class TimeTakenFromInterviewToFeedbackView(APIView):
     def get(self, request, format=None):
      
-     data = get_average_time_taken_for_clients()
+     data = get_average_time_taken_for_interviewtofeedback()
      serializer = AverageTimeTakenbyClientsSerializer(data, many=True)
      return Response(serializer.data, status=200)
     

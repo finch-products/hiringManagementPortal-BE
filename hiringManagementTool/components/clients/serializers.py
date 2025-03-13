@@ -6,6 +6,15 @@ class ClientMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClientMaster
         fields = '__all__'
+        
+    def to_internal_value(self, data):
+     data = dict(data)  
+     for key, value in data.items():
+        if value == ['']:  
+            data[key] = None
+        elif isinstance(value, list):  # Handle list case
+            data[key] = value[0]  # Take first value if list
+     return super().to_internal_value(data)
 
 
 class ClientMimimumDetailsSerializer(serializers.ModelSerializer):
