@@ -40,7 +40,7 @@ class DemandAPIView(APIView):
 
 class AllDemandsAPIView(APIView):
     def get(self, request):
-        queryset = OpenDemand.objects.all()
+        queryset = OpenDemand.objects.all().order_by('-dem_insertdate')
         serializer = AllOpenDemandsIdSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -68,8 +68,11 @@ class OpenDemandUpdateAPIView(APIView):
 
             # Handle ForeignKey field: Convert dem_dsm_id to an instance of DemandStatusMaster
             if "dem_dsm_id" in update_fields:
-                dsm_instance = DemandStatusMaster.objects.get(dsm_id=update_fields["dem_dsm_id"])
-                update_fields["dem_dsm_id"] = dsm_instance  # Assign instance, not integer
+                try: 
+                    dsm_instance = DemandStatusMaster.objects.get(dsm_id=update_fields["dem_dsm_id"])
+                    update_fields["dem_dsm_id"] = dsm_instance  # Assign instance, not integer
+                except DemandStatusMaster.DoesNotExist:
+                    return Response({"error": f"Invalid dem_dsm_id: {update_fields['dem_dsm_id']} not found."}, status=status.HTTP_400_BAD_REQUEST)
             
             # Handle ForeignKey field: Convert dem_clm_id to a ClientMaster instance
             if "dem_clm_id" in update_fields:
@@ -174,3 +177,4 @@ class FilterDemandsAPIView(APIView):
             })
 
         return Response(results)
+
