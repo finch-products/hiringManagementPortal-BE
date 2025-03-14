@@ -8,19 +8,9 @@ from rest_framework.generics import ListAPIView
 
 class DemandStatusDetailsAPIView(generics.ListAPIView):
     serializer_class = DemandStatusDetailsSerializer
-
-    def get_queryset(self):
-        """Sort records by dsm_sortid in ascending order"""
-        return DemandStatusMaster.objects.all().order_by('dsm_sortid')
-
-    def get(self, request, *args, **kwargs):
-        """Fetch and return demand status data as a Django response"""
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        
-        return Response(serializer.data, status=200)
+    queryset = DemandStatusMaster.objects.filter(dsm_inactive=False).order_by('dsm_sortid')
     
 
 class DemandStatusDropdownAPIView(ListAPIView):
-    queryset = DemandStatusMaster.objects.all()
+    queryset = DemandStatusMaster.objects.filter(dsm_inactive=False)  # Exclude inactive statuses
     serializer_class = DemandStatusSerializer

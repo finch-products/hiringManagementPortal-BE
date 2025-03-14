@@ -17,7 +17,13 @@ class CandidateStatusMaster(models.Model):
         related_name="status_created",
         help_text="User ID (Employee) who created this status"
     )
-
+    csm_inactive = models.BooleanField(default=False, db_column="csm_inactive", help_text="If True (1), this status will not be listed in the application")
+    
+    csm_resstatus = models.TextField(
+        blank=True, null=True,
+        db_column="csm_resstatus",
+        help_text="Comma-separated list of candidate status IDs that cannot transition to this status"
+    )
     def __str__(self):
         return f"{self.csm_code} - Status ID: {self.csm_id}"
     

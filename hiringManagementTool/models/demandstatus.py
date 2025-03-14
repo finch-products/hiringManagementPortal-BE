@@ -20,9 +20,14 @@ class DemandStatusMaster(models.Model):
         db_column="dsm_updateby",
         help_text="User ID (Employee) who last updated this status"
     )
-
+    
     dsm_isclosed = models.BooleanField(default=False, help_text="Indicates if the status is treated as closed")
-
+    dsm_resstatus = models.TextField(
+        blank=True, null=True,
+        db_column="dsm_resstatus",
+        help_text="Comma-separated list of demand status IDs that cannot transition to this status"
+    )
+    dsm_inactive = models.BooleanField(default=False, db_column="dsm_inactive", help_text="If True (1), this status will not be listed in the application")
     def __str__(self):
         return f"{self.dsm_code} - {'Closed' if self.dsm_isclosed else 'Open'}"
     

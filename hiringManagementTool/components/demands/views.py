@@ -49,12 +49,14 @@ class DemandDetailAPIView(RetrieveUpdateAPIView):
     serializer_class = OpenDemandSerializer
     lookup_field = 'dem_id'
     lookup_url_kwarg = 'id'
+
+    
 class OpenDemandUpdateAPIView(APIView):
     def patch(self, request, *args, **kwargs):
         dem_id = request.data.get("dem_id")
         dem_updateby_id = request.data.get("dem_updateby_id")
 
-        # Ensure that update_fields is initialized before use
+        # Ensure update_fields is initialized before use
         update_fields = {key: value for key, value in request.data.items() if key not in ["dem_id", "dem_updateby_id"]}
 
         if not dem_id or not dem_updateby_id:
@@ -66,31 +68,43 @@ class OpenDemandUpdateAPIView(APIView):
         try:
             open_demand = OpenDemand.objects.get(dem_id=dem_id)
 
-            # Handle ForeignKey field: Convert dem_dsm_id to an instance of DemandStatusMaster
+            # Get the current status ID (from status)
+            current_dsm_id = open_demand.dem_dsm_id.dsm_id
+
+            # If "dem_dsm_id" is being updated, validate status transition
             if "dem_dsm_id" in update_fields:
-                try: 
-                    dsm_instance = DemandStatusMaster.objects.get(dsm_id=update_fields["dem_dsm_id"])
-                    update_fields["dem_dsm_id"] = dsm_instance  # Assign instance, not integer
-                except DemandStatusMaster.DoesNotExist:
-                    return Response({"error": f"Invalid dem_dsm_id: {update_fields['dem_dsm_id']} not found."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Handle ForeignKey field: Convert dem_clm_id to a ClientMaster instance
+                new_dsm_id = update_fields["dem_dsm_id"]
+                
+                # Fetch current status restrictions
+                current_status = DemandStatusMaster.objects.get(dsm_id=current_dsm_id)
+                restricted_statuses = (
+                    current_status.dsm_resstatus.split(",") if current_status.dsm_resstatus else []
+                )
+
+                # Check if new status is in restricted statuses
+                if str(new_dsm_id) in restricted_statuses:
+                    return Response(
+                        {"error": "This status cannot be assigned to this demand."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Convert new_dsm_id to DemandStatusMaster instance
+                dsm_instance = DemandStatusMaster.objects.get(dsm_id=new_dsm_id)
+                update_fields["dem_dsm_id"] = dsm_instance
+
+            # Handle ForeignKey fields (Convert IDs to instances)
             if "dem_clm_id" in update_fields:
-                clm_instance = ClientMaster.objects.get(clm_id=update_fields["dem_clm_id"])
-                update_fields["dem_clm_id"] = clm_instance  # Assign instance, not integer
+                update_fields["dem_clm_id"] = ClientMaster.objects.get(clm_id=update_fields["dem_clm_id"])
 
             if "dem_lob_id" in update_fields:
-                lob_instance = LOBMaster.objects.get(lob_id=update_fields["dem_lob_id"])
-                update_fields["dem_lob_id"] = lob_instance  # Assign instance, not integer
+                update_fields["dem_lob_id"] = LOBMaster.objects.get(lob_id=update_fields["dem_lob_id"])
 
             if "dem_idm_id" in update_fields:
-                idm_instance = InternalDepartmentMaster.objects.get(idm_id=update_fields["dem_idm_id"])
-                update_fields["dem_idm_id"] = idm_instance  # Assign instance, not integer
+                update_fields["dem_idm_id"] = InternalDepartmentMaster.objects.get(idm_id=update_fields["dem_idm_id"])
 
             if "dem_lcm_id" in update_fields:
-                lcm_instance = LocationMaster.objects.get(lcm_id=update_fields["dem_lcm_id"])
-                update_fields["dem_lcm_id"] = lcm_instance
-                
+                update_fields["dem_lcm_id"] = LocationMaster.objects.get(lcm_id=update_fields["dem_lcm_id"])
+
             # Update fields dynamically
             for field, value in update_fields.items():
                 setattr(open_demand, field, value)

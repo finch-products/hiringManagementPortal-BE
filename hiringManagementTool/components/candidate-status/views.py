@@ -5,6 +5,6 @@ from .serializers import CandidateStatusSerializer
 
 class CandidateStatusAPIView(APIView):
     def get(self, request, *args, **kwargs):
-        statuses = CandidateStatusMaster.objects.all()
+        statuses = CandidateStatusMaster.objects.filter(csm_inactive=False)  # Exclude inactive statuses
         serializer = CandidateStatusSerializer(statuses, many=True)
         return Response(serializer.data)
