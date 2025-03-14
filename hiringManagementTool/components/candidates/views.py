@@ -1,5 +1,5 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
-from hiringManagementTool.components.candidates.serializers import CandidateMasterSerializer
+from hiringManagementTool.components.candidates.serializers import CandidateMasterSerializer, CandidateHistorySerializer, AllCandidateMasterIdSerializer
 from hiringManagementTool.models.candidates import CandidateMaster
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +8,7 @@ from datetime import datetime
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
 from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
 from hiringManagementTool.models.employees import EmployeeMaster
+from django.shortcuts import get_object_or_404
 
 class CandidateAPIView(ListCreateAPIView):
     queryset = CandidateMaster.objects.all()
@@ -79,3 +80,28 @@ class CandidateStatusUpdateAPIView(APIView):
             return Response({"error": "Invalid cdm_updateby_id: No such EmployeeMaster found."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+class CandidateHistoryAPIView(APIView):
+    def get(self, request, candidate_id):
+        candidate = get_object_or_404(CandidateMaster, cdm_id=candidate_id)
+        response_data = {
+            "candidate": {
+                "id": candidate.cdm_id,
+                "name": candidate.cdm_name,
+                "email": candidate.cdm_email,
+                "phone": candidate.cdm_phone,
+                "profile": candidate.cdm_profile.url if candidate.cdm_profile else None,
+                "description": candidate.cdm_description,
+                "current_status": CandidateHistorySerializer().get_current_status(candidate),
+            },
+            "demands": CandidateHistorySerializer().get_demands(candidate)
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+class AllCandidateAPIView(APIView):
+    def get(self, request):
+        queryset = CandidateMaster.objects.all()
+        serializer = AllCandidateMasterIdSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
