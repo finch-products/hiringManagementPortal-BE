@@ -9,6 +9,7 @@ from hiringManagementTool.models.candidatedemand import CandidateDemandLink
 from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
 from hiringManagementTool.models.employees import EmployeeMaster
 from django.shortcuts import get_object_or_404
+from django.db import transaction  
 
 class CandidateAPIView(ListCreateAPIView):
     queryset = CandidateMaster.objects.all()
@@ -34,43 +35,50 @@ class CandidateStatusUpdateAPIView(APIView):
             return Response({"error": "cdm_id, cdm_updateby_id, and csm_id are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Fetch the candidate record
-            candidate = CandidateMaster.objects.get(cdm_id=cdm_id)
-            current_csm_id = candidate.cdm_csm_id.csm_id if candidate.cdm_csm_id else None
+            with transaction.atomic():  # Use transaction for atomicity
 
-            # Fetch the new status instance
-            new_csm_instance = CandidateStatusMaster.objects.get(csm_id=csm_id)
+                # Fetch the candidate record
+                candidate = CandidateMaster.objects.get(cdm_id=cdm_id)
+                #current_csm_id = candidate.cdm_csm_id.csm_id if candidate.cdm_csm_id else None
+                current_csm_id = candidate.cdm_csm_id.csm_id if candidate.cdm_csm_id else None
 
-            # Validate status transition
-            if current_csm_id:
-                current_status = CandidateStatusMaster.objects.get(csm_id=current_csm_id)
-                restricted_statuses = (
-                    current_status.csm_resstatus.split(",") if current_status.csm_resstatus else []
-                )
 
-                # Check if the new status is in the restricted statuses
-                if str(csm_id) in restricted_statuses:
-                    return Response(
-                        {"error": f"This status ({new_csm_instance.csm_code}) cannot be assigned to this candidate."},
-                        status=status.HTTP_400_BAD_REQUEST
+                # Fetch the new status instance
+                new_csm_instance = CandidateStatusMaster.objects.get(csm_id=csm_id)
+
+                # Validate status transition
+                if current_csm_id:
+                    current_status = CandidateStatusMaster.objects.get(csm_id=current_csm_id)
+                    restricted_statuses = (
+                        current_status.csm_resstatus.split(",") if current_status.csm_resstatus else []
                     )
 
-            # Update the candidate status and comment
-            candidate.cdm_csm_id = new_csm_instance
-            if cdm_comment is not None:
-                candidate.cdm_comment = cdm_comment
+                    # Check if the new status is in the restricted statuses
+                    if str(csm_id) in restricted_statuses:
+                        return Response(
+                            {"error": f"This status ({new_csm_instance.csm_code}) cannot be assigned to this candidate."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
 
-            # Update the updateby and updatedate fields
-            candidate.cdm_updateby = EmployeeMaster.objects.get(emp_id=cdm_updateby_id)
-            candidate.cdm_updatedate = datetime.now()
+                # Update the candidate status and comment
+                candidate.cdm_csm_id = new_csm_instance
+                if cdm_comment is not None:
+                    candidate.cdm_comment = cdm_comment
 
-            # Save the candidate (this will not generate a new cdm_id because it's an update)
-            candidate.save()
+                # Update the updateby and updatedate fields
+                candidate.cdm_updateby = EmployeeMaster.objects.get(emp_id=cdm_updateby_id)
+                candidate.cdm_updatedate = datetime.now()
 
-            # Update the CandidateDemandLink table
-            CandidateDemandLink.objects.filter(cdl_cdm_id=cdm_id).update(cdl_csm_id=new_csm_instance)
+                # Save the candidate (this will not generate a new cdm_id because it's an update)
+                candidate.save()
 
-            return Response({"message": "Candidate status and comment updated successfully"}, status=status.HTTP_200_OK)
+                # Update the CandidateDemandLink table - CORRECTED
+                candidate_demand_links = CandidateDemandLink.objects.filter(cdl_cdm_id=cdm_id)  # Get the queryset
+                for link in candidate_demand_links: # Iterate over the objects in the queryset
+                    link.cdl_csm_id = new_csm_instance  # Assign csm instance
+                    link.save()  # NOW the post_save signal will trigger for each CandidateDemandLink instance
+
+                return Response({"message": "Candidate status and comment updated successfully"}, status=status.HTTP_200_OK)
 
         except CandidateMaster.DoesNotExist:
             return Response({"error": "Candidate with the provided cdm_id does not exist."}, status=status.HTTP_404_NOT_FOUND)
@@ -80,8 +88,8 @@ class CandidateStatusUpdateAPIView(APIView):
             return Response({"error": "Invalid cdm_updateby_id: No such EmployeeMaster found."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-
+        
+        
 class CandidateHistoryAPIView(APIView):
     def get(self, request, candidate_id):
         candidate = get_object_or_404(CandidateMaster, cdm_id=candidate_id)
@@ -104,4 +112,3 @@ class AllCandidateAPIView(APIView):
         queryset = CandidateMaster.objects.all()
         serializer = AllCandidateMasterIdSerializer(queryset, many=True)
         return Response(serializer.data)
-    
