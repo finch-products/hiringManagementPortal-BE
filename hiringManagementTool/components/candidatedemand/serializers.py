@@ -12,8 +12,8 @@ class ClientSerializer(serializers.Serializer):
     clm_managername = serializers.CharField(source='dem_clm_id.clm_managername')
 
 class LocationSerializer(serializers.Serializer):
-    lcm_id = serializers.IntegerField(source='dem_lcm_id.lcm_id')
-    lcm_name = serializers.CharField(source='dem_lcm_id.lcm_name')
+    lcm_id = serializers.IntegerField(source='dem_lcm_id.lcm_id',allow_null=True, default=None)
+    lcm_name = serializers.CharField(source='dem_lcm_id.lcm_name',allow_null=True, default=None)
 
 
 class EmployeeMasterSerializer(serializers.ModelSerializer):
@@ -44,8 +44,8 @@ class LOBSerializer(serializers.Serializer):
         fields = ['lob_id', 'lob_name', 'client_partner', 'delivery_manager']
 
 class DepartmentSerializer(serializers.Serializer):
-    idm_id = serializers.IntegerField(source='dem_idm_id.idm_id')
-    idm_unitname = serializers.CharField(source='dem_idm_id.idm_unitname')
+    idm_id = serializers.IntegerField(source='dem_idm_id.idm_id',allow_null=True, default=None)
+    idm_unitname = serializers.CharField(source='dem_idm_id.idm_unitname',allow_null=True, default=None)
 
 class StatusSerializer(serializers.Serializer):
     dsm_id = serializers.IntegerField(source='dem_dsm_id.dsm_id')
