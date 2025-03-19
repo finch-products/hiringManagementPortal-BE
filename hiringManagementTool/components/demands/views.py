@@ -2,7 +2,7 @@ import json
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status,serializers
 from rest_framework.parsers import MultiPartParser, FormParser
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
@@ -58,8 +58,17 @@ class OpenDemandUpdateAPIView(UpdateAPIView):
     """Efficiently updates OpenDemand"""
     queryset = OpenDemand.objects.all()
     serializer_class = OpenDemandUpdateSerializer
-    lookup_field = "dem_id"
-    lookup_url_kwarg = 'id'
+    #lookup_field = "dem_id"
+    #lookup_url_kwarg = 'id'
+    def get_object(self):
+        dem_id = self.request.data.get("dem_id")  # Get dem_id from request body
+        if not dem_id:
+            raise serializers.ValidationError({"dem_id": "This field is required."})
+        
+        try:
+            return OpenDemand.objects.get(dem_id=dem_id)
+        except OpenDemand.DoesNotExist:
+            raise serializers.ValidationError({"dem_id": "OpenDemand with this ID does not exist."})
     
 class FilterDemandsAPIView(APIView):
     def get(self, request):
