@@ -20,7 +20,7 @@ class DemandAPIView(APIView):
     
     def get(self, request):
         """Retrieve all OpenDemands"""
-        demands = OpenDemand.objects.all()
+        demands = OpenDemand.objects.all().order_by('-dem_insertdate') 
         serializer = OpenDemandSerializer(demands, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -40,7 +40,7 @@ class DemandAPIView(APIView):
 
 class AllDemandsAPIView(APIView):
     def get(self, request):
-        queryset = OpenDemand.objects.all().order_by('-dem_insertdate')
+        queryset = OpenDemand.objects.all()
         serializer = AllOpenDemandsIdSerializer(queryset, many=True)
         return Response(serializer.data)
 
