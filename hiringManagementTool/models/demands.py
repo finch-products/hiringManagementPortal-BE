@@ -79,6 +79,7 @@ class OpenDemand(models.Model):
     dem_positions = models.IntegerField(#blank=True, null=True,
                                         default=0,
                                         help_text="Number of Positions Required")
+    dem_position_location = models.JSONField(blank=True, null=True, help_text="Position Location")  
     dem_rrnumber = models.CharField(blank=True, null=True,max_length=50, help_text="Request Number")
     dem_jrnumber = models.TextField(blank=True, null=True, help_text="JR Number if External")
     dem_rrgade = models.CharField(max_length=100, blank=True, null=True, help_text="RR Grade Entry")

@@ -53,19 +53,27 @@ class DemandStatusMasterSerializer(serializers.ModelSerializer):
         model = DemandStatusMaster
         fields = ['dsm_id', 'dsm_code', 'dsm_description']
 class OpenDemandSerializer(serializers.ModelSerializer):
+
+    dem_position_location = serializers.ListField(
+        child=serializers.IntegerField(), required=False
+    )
+    
     client_details = ClientMasterSerializer(source='dem_clm_id', read_only=True)
     location_details = LocationMasterSerializer(source='dem_lcm_id', read_only=True)
     lob_details = LOBMasterSerializer(source='dem_lob_id', read_only=True)
     department_details = InternalDepartmentMasterSerializer(source='dem_idm_id', read_only=True)
     status_details = DemandStatusMasterSerializer(source='dem_dsm_id', read_only=True)
+    postion_location = LocationMasterSerializer(source='dem_lcm_id', read_only=True)
 
     dem_clm_id = serializers.PrimaryKeyRelatedField(queryset=ClientMaster.objects.only("clm_id"), write_only=True)
     dem_lcm_id = serializers.PrimaryKeyRelatedField(queryset=LocationMaster.objects.only("lcm_id"), write_only=True, required=False)
     dem_lob_id = serializers.PrimaryKeyRelatedField(queryset=LOBMaster.objects.only("lob_id"), write_only=True, required=True)
     dem_idm_id = serializers.PrimaryKeyRelatedField(queryset=InternalDepartmentMaster.objects.only("idm_id"), write_only=True, required=False)
     dem_dsm_id = serializers.PrimaryKeyRelatedField(queryset=DemandStatusMaster.objects.only("dsm_id"), write_only=True, required=False)
+    dem_position_location = serializers.PrimaryKeyRelatedField(queryset=LocationMaster.objects.only("lcm_id"), write_only=True, required=False)
 
-    
+   
+
     def create(self, validated_data):
         jd_present = validated_data.get("dem_jd")
         status_key = "OPEN" if jd_present else "JD_NOT_RECEIVED"

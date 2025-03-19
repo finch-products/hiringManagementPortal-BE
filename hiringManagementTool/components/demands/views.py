@@ -1,3 +1,4 @@
+import json
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -29,17 +30,29 @@ class DemandAPIView(APIView):
 
     def post(self, request):
         """Create a new demand and auto-assign status"""
-        print("\n📥 Incoming Request Data:", request.data)
-        print("\n📥 dem_jd value:", request.data.get('dem_jd'))  # Log the value of dem_jd
+        data = request.data.copy()  # Make a mutable copy
+        print("\n📥 Incoming Request Data:", request.data)  # D
+        # Convert 'dem_position_location' from string to list if it's in request
+        data = request.data.copy()
 
-        serializer = OpenDemandSerializer(data=request.data)
+
+        if "dem_position_location" in data:
+            print("\n🔍 Raw dem_position_location:", data["dem_position_location"])
+
+
+        # if "dem_position_location" in data and isinstance(data["dem_position_location"], str):
+        #     try:
+        #         data["dem_position_location"] = json.loads(data["dem_position_location"])
+        #     except json.JSONDecodeError:
+        #         return Response({"error": "Invalid format for dem_position_location"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = OpenDemandSerializer(data=data)
         if serializer.is_valid():
-            print("\n✅ Serializer Validated Data:", serializer.validated_data)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-        print("\n❌ Serializer Errors:", serializer.errors)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class AllDemandsAPIView(APIView):
     def get(self, request):
