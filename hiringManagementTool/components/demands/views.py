@@ -10,6 +10,7 @@ from hiringManagementTool.models.demandstatus import DemandStatusMaster
 from hiringManagementTool.models.departments import InternalDepartmentMaster
 from hiringManagementTool.models.locations import LocationMaster
 from .serializers import OpenDemandUpdateSerializer, AllOpenDemandsIdSerializer
+from rest_framework.generics import UpdateAPIView
 from datetime import datetime
 from django.db.models import Count, Q
 from hiringManagementTool.models.clients import ClientMaster
@@ -20,7 +21,9 @@ class DemandAPIView(APIView):
     
     def get(self, request):
         """Retrieve all OpenDemands"""
-        demands = OpenDemand.objects.all().order_by('-dem_insertdate') 
+        demands = OpenDemand.objects.select_related(
+            'dem_clm_id', 'dem_lcm_id', 'dem_lob_id', 'dem_idm_id', 'dem_dsm_id'
+        ).order_by('-dem_insertdate') 
         serializer = OpenDemandSerializer(demands, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -50,81 +53,12 @@ class DemandDetailAPIView(RetrieveUpdateAPIView):
     lookup_field = 'dem_id'
     lookup_url_kwarg = 'id'
 
+class OpenDemandUpdateAPIView(UpdateAPIView):
+    """Efficiently updates OpenDemand"""
+    queryset = OpenDemand.objects.all()
+    serializer_class = OpenDemandUpdateSerializer
+    lookup_field = "dem_id"
     
-class OpenDemandUpdateAPIView(APIView):
-    def patch(self, request, *args, **kwargs):
-        dem_id = request.data.get("dem_id")
-        dem_updateby_id = request.data.get("dem_updateby_id")
-
-        # Ensure update_fields is initialized before use
-        update_fields = {key: value for key, value in request.data.items() if key not in ["dem_id", "dem_updateby_id"]}
-
-        if not dem_id or not dem_updateby_id:
-            return Response({"error": "dem_id and dem_updateby_id are required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not update_fields:
-            return Response({"error": "At least one field must be provided for update."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            open_demand = OpenDemand.objects.get(dem_id=dem_id)
-
-            # Get the current status ID (from status)
-            current_dsm_id = open_demand.dem_dsm_id.dsm_id
-
-            # If "dem_dsm_id" is being updated, validate status transition
-            if "dem_dsm_id" in update_fields:
-                new_dsm_id = update_fields["dem_dsm_id"]
-                
-                # Fetch current status restrictions
-                current_status = DemandStatusMaster.objects.get(dsm_id=current_dsm_id)
-                restricted_statuses = (
-                    current_status.dsm_resstatus.split(",") if current_status.dsm_resstatus else []
-                )
-
-                # Check if new status is in restricted statuses
-                if str(new_dsm_id) in restricted_statuses:
-                    return Response(
-                        {"error": "This status cannot be assigned to this demand."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-
-                # Convert new_dsm_id to DemandStatusMaster instance
-                dsm_instance = DemandStatusMaster.objects.get(dsm_id=new_dsm_id)
-                update_fields["dem_dsm_id"] = dsm_instance
-
-            # Handle ForeignKey fields (Convert IDs to instances)
-            if "dem_clm_id" in update_fields:
-                update_fields["dem_clm_id"] = ClientMaster.objects.get(clm_id=update_fields["dem_clm_id"])
-
-            if "dem_lob_id" in update_fields:
-                update_fields["dem_lob_id"] = LOBMaster.objects.get(lob_id=update_fields["dem_lob_id"])
-
-            if "dem_idm_id" in update_fields:
-                update_fields["dem_idm_id"] = InternalDepartmentMaster.objects.get(idm_id=update_fields["dem_idm_id"])
-
-            if "dem_lcm_id" in update_fields:
-                update_fields["dem_lcm_id"] = LocationMaster.objects.get(lcm_id=update_fields["dem_lcm_id"])
-
-            # Update fields dynamically
-            for field, value in update_fields.items():
-                setattr(open_demand, field, value)
-
-            open_demand.dem_updateby_id = dem_updateby_id
-            open_demand.dem_updatedate = datetime.now()
-            open_demand.save()
-
-            return Response({"message": "Demand updated successfully"}, status=status.HTTP_200_OK)
-
-        except OpenDemand.DoesNotExist:
-            return Response({"error": "OpenDemand with the provided dem_id does not exist."}, status=status.HTTP_404_NOT_FOUND)
-        except DemandStatusMaster.DoesNotExist:
-            return Response({"error": "Invalid dem_dsm_id: No such DemandStatusMaster found."}, status=status.HTTP_400_BAD_REQUEST)
-        except ClientMaster.DoesNotExist:
-            return Response({"error": "Invalid dem_clm_id: No such ClientMaster found."}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        
 class FilterDemandsAPIView(APIView):
     def get(self, request):
         # Extract query parameters
