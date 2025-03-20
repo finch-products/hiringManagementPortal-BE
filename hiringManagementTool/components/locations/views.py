@@ -5,7 +5,7 @@ from hiringManagementTool.components.locations.serializers import LocationMaster
 from hiringManagementTool.models.locations import LocationMaster
 
 class LocationAPIView(ListCreateAPIView):
-    queryset = LocationMaster.objects.all()
+    queryset = LocationMaster.objects.all().order_by('-lcm_insertdate')
     serializer_class = LocationMasterSerializer
 
 
