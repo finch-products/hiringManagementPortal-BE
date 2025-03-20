@@ -8,6 +8,7 @@ from .demandstatus import DemandStatusMaster
 from .employees import EmployeeMaster
 from datetime import datetime
 from django.db.models import Max
+import json
 
 class OpenDemand(models.Model):
     dem_id = models.CharField(
@@ -106,6 +107,7 @@ class OpenDemand(models.Model):
         related_name="demands_updated",
         help_text="User ID (Employee) who last updated this record"
     )
+    dem_position_location = models.JSONField(default=list, blank=True)  # New field for multiple locations
 
     def save(self, *args, **kwargs):
         if not self.dem_id:
@@ -120,6 +122,13 @@ class OpenDemand(models.Model):
             new_number = max(numeric_suffixes, default=0) + 1  # Get the next number
 
             self.dem_id = f"dem_{today}_{new_number}"
+
+        # Ensure dem_position_location is a valid JSON list
+        if isinstance(self.dem_position_location, str):
+            try:
+                self.dem_position_location = json.loads(self.dem_position_location)
+            except json.JSONDecodeError:
+                self.dem_position_location = []
 
         super().save(*args, **kwargs)
 
