@@ -63,10 +63,7 @@ def track_status_change(sender, instance, created, **kwargs):
                 field_value_msg = field_log_messages.get(field, " ")
                 print(f"Looking for log message: '{field_value_msg}' in DemandHistory for ID: {instance.dem_id}")
 
-                last_field_history = DemandHistory.objects.filter(
-                 dhs_dem_id=instance.dem_id, 
-                 dhs_log_msg__icontains=field_value_msg
-                ).order_by('-dhs_dsm_insertdate').first()
+                last_field_history = DemandHistory.objects.filter(dhs_dem_id=instance.dem_id, dhs_log_msg__icontains=field_log_messages.get(field).replace('_', ' ')).order_by('-dhs_dsm_insertdate').first()
 
                 if last_field_history:
                     print("History found:", last_field_history)

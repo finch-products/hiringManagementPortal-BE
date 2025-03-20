@@ -38,7 +38,7 @@ class DemandHistory(models.Model):
     )"""
 
     def __str__(self):
-        return f"History ID: {self.dhs_id} - Status: {self.dhs_dsm_code}"
+        return f"History ID: {self.dhs_id} - Status: {self.dhs_dsm_id}"
     
     class Meta:
         managed = True
