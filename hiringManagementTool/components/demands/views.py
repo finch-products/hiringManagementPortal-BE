@@ -33,7 +33,35 @@ class DemandAPIView(APIView):
         print("\n📥 Incoming Request Data:", request.data)
         print("\n📥 dem_jd value:", request.data.get('dem_jd'))  # Log the value of dem_jd
 
-        serializer = OpenDemandSerializer(data=request.data)
+         # Handle dem_position_location if it's coming as a JSON string
+        data = request.data.copy()  # Create a mutable copy
+         # Handle dem_position_location
+        # Fix dem_position_location handling
+        # In your view's post method:
+        # In your view:
+        if 'dem_position_location' in data:
+            position_location = data['dem_position_location']
+    
+        if isinstance(position_location, str):
+         try:
+            # Parse the string to Python object
+            if position_location.startswith('[') and position_location.endswith(']'):
+                # It's a JSON string
+                parsed_data = json.loads(position_location)
+            else:
+                # It might be comma-separated values
+                parsed_data = [x.strip() for x in position_location.split(',') if x.strip()]
+            
+            # Convert to list of integers and assign back
+            data['dem_position_location'] = [int(item) for item in parsed_data]
+         except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error parsing: {e}")
+            data['dem_position_location'] = []
+
+        print("\n📥 Final Parsed dem_position_location:", data['dem_position_location'])  # Debug final data
+
+
+        serializer = OpenDemandSerializer(data=data)
         if serializer.is_valid():
             print("\n✅ Serializer Validated Data:", serializer.validated_data)
             serializer.save()

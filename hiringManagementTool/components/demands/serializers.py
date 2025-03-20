@@ -8,6 +8,7 @@ from hiringManagementTool.models.lobs import LOBMaster
 from hiringManagementTool.models.locations import LocationMaster
 from hiringManagementTool.models.employees import EmployeeMaster
 from rest_framework import serializers
+import json
 
 class ClientMasterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -53,7 +54,6 @@ class DemandStatusMasterSerializer(serializers.ModelSerializer):
         model = DemandStatusMaster
         fields = ['dsm_id', 'dsm_code', 'dsm_description']
 class OpenDemandSerializer(serializers.ModelSerializer):
-    
     client_details = ClientMasterSerializer(source='dem_clm_id', read_only=True)
     location_details = LocationMasterSerializer(source='dem_lcm_id', read_only=True)
     lob_details = LOBMasterSerializer(source='dem_lob_id', read_only=True)
@@ -65,7 +65,11 @@ class OpenDemandSerializer(serializers.ModelSerializer):
     dem_lob_id = serializers.PrimaryKeyRelatedField(queryset=LOBMaster.objects.only("lob_id"), write_only=True, required=True)
     dem_idm_id = serializers.PrimaryKeyRelatedField(queryset=InternalDepartmentMaster.objects.only("idm_id"), write_only=True, required=False)
     dem_dsm_id = serializers.PrimaryKeyRelatedField(queryset=DemandStatusMaster.objects.only("dsm_id"), write_only=True, required=False)
+    dem_position_location = serializers.JSONField(required=False, default=list)
 
+    #dem_position_location = serializers.PrimaryKeyRelatedField(queryset=LocationMaster.objects.all(), many=True, write_only=True, required=False)
+
+   
 
     def create(self, validated_data):
         jd_present = validated_data.get("dem_jd")
