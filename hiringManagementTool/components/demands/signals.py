@@ -47,7 +47,8 @@ def track_status_change(sender, instance, created, **kwargs):
     "dem_insertdate": "Insert Date",
     "dem_insertby_id": "Inserted by Employee",
     "dem_updatedate": "Update Date",
-    "dem_updateby_id": "Updated by Employee"
+    "dem_updateby_id": "Updated by Employee",
+    "dem_position_location":"dem_position_locationn"
     }
 
     fields_with_id = [ 'dem_dsm_id', 'dem_clm_id', 'dem_idm_id', 'dem_insertby_id', 'dem_lcm_id', 'dem_lob_id', 'dem_updateby_id' ]
@@ -62,7 +63,8 @@ def track_status_change(sender, instance, created, **kwargs):
 
         # Store initial state for every tracked field
         for field in tracked_fields:
-            field_value = getattr(instance, field, None)
+            field_value = str(getattr(instance,field,None))
+            field_value_normalize=unicodedata.normalize("NFKC", field_value).replace("\xa0", " ")
             if hasattr(instance, f"{field}_id"):
                 field_value_id = getattr(instance, f"{field}_id")
 
@@ -76,7 +78,7 @@ def track_status_change(sender, instance, created, **kwargs):
     
                 dhs_todata = {
                             "id": field_value_id if field in fields_with_id else "Null",  # Store actual field  ID
-                            "value": str(field_value)
+                            "value": str(getattr(getattr(instance, field), "clm_name", None) ) if field=='dem_clm_id' else field_value_normalize
                             },
                 #dhs_fromdata="None",  # No previous record since it's newly created
                 #dhs_todata=str(field_value) if field_value is not None else "None",
@@ -92,7 +94,7 @@ def track_status_change(sender, instance, created, **kwargs):
     
     for field in tracked_fields:
              # Fetch the last recorded value for this specific field : dhs_log_msg_icontains=field.replace('', ' ')
-            last_field_history = DemandHistory.objects.filter(dhs_dem_id=instance.dem_id, dhs_log_msg__icontains=field_log_messages.get(field).replace('_', ' ')).order_by('-dhs_dsm_insertdate').first()
+            last_field_history = DemandHistory.objects.filter(dhs_dem_id=instance.dem_id, dhs_log_msg_icontains=field_log_messages.get(field).replace('', ' ')).order_by('-dhs_dsm_insertdate').first()
             old_value = last_field_history.dhs_todata if last_history else None
 
             if hasattr(instance, f"{field}_id"):
@@ -117,7 +119,7 @@ def track_status_change(sender, instance, created, **kwargs):
                 changes_detected = True  # Mark as changed
 
                 print(f"⚡ Change Detected: {field} changed from {old_value} → {new_value}")
-                #print(old_value.__class__," and class" ,new_value.__class__)
+                #print(old_value._class," and class" ,new_value.class_)
 
             # Store a history entry for each changed field
                 DemandHistory.objects.create(
@@ -130,8 +132,8 @@ def track_status_change(sender, instance, created, **kwargs):
                     dhs_dsm_insertdate=now(),
                     dhs_log_msg=field_log_messages.get(field,field.title()),
                     )
+                print(f"✅ Changes saved: {field} changed from {old_value} → {new_value}")
+                #print(old_value._class," and class" ,new_value.class_)
 
     if not changes_detected:
             print("✅ No Changes Detected, No History Entry Created")
-
-

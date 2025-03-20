@@ -36,9 +36,6 @@ class DemandAPIView(APIView):
          # Handle dem_position_location if it's coming as a JSON string
         data = request.data.copy()  # Create a mutable copy
          # Handle dem_position_location
-        # Fix dem_position_location handling
-        # In your view's post method:
-        # In your view:
         if 'dem_position_location' in data:
             position_location = data['dem_position_location']
     
