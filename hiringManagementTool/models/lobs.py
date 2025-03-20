@@ -4,7 +4,11 @@ from django.db import models
 class LOBMaster(models.Model):
     lob_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for LOB)")
     lob_name = models.CharField(max_length=50, help_text="LOB Name")
-    lob_description = models.TextField(help_text="LOB Description")
+    lob_description = models.TextField(
+        help_text="LOB Description", 
+        null=True, 
+        blank=True  # Makes it optional
+    )
     
     lob_clientpartner = models.ForeignKey(
         'EmployeeMaster', 
