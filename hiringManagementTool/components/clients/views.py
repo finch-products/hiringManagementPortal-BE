@@ -17,7 +17,7 @@ class ClientDetailAPIView(RetrieveUpdateAPIView):
 
 
 class ClientMinimumDetailsAPIView(generics.ListAPIView):  # ReadOnlyModelViewSet allows only GET requests
-    queryset = ClientMaster.objects.all()
+    queryset = ClientMaster.objects.filter(clm_isactive=True)
     serializer_class = ClientMimimumDetailsSerializer
 
     # def list(self, request, *args, **kwargs):
