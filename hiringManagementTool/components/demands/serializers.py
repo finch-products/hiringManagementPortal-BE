@@ -13,7 +13,7 @@ import json
 class ClientMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClientMaster
-        fields = ['clm_id', 'clm_name', 'clm_managername'] 
+        fields = ['clm_id', 'clm_name', 'clm_managername','clm_clientemail'] 
 class LocationMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocationMaster
