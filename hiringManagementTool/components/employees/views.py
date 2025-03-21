@@ -8,7 +8,7 @@ from hiringManagementTool.components.employees.serializers import EmployeeMaster
 from rest_framework.decorators import api_view
 
 class EmployeeAPIView(ListCreateAPIView):
-    queryset = EmployeeMaster.objects.all()
+    queryset = EmployeeMaster.objects.all().order_by('-emp_insertdate')
     serializer_class = EmployeeMasterSerializer
 
 class EmployeeDetailAPIView(RetrieveUpdateAPIView):

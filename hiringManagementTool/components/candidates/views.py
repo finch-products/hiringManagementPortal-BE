@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction  
 
 class CandidateAPIView(ListCreateAPIView):
-    queryset = CandidateMaster.objects.all()
+    queryset = CandidateMaster.objects.all().order_by('-cdm_insertdate')
 
     serializer_class = CandidateMasterSerializer
 

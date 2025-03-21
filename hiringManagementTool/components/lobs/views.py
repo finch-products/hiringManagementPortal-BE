@@ -5,7 +5,7 @@ from hiringManagementTool.models.lobs import LOBMaster
 from hiringManagementTool.components.lobs.serializers import LOBMasterSerializer, LOBMinimumDetailsSerializer
 
 class LOBAPIView(ListCreateAPIView):
-    queryset = LOBMaster.objects.all()
+    queryset = LOBMaster.objects.all().order_by('-lob_insertdate')
     serializer_class = LOBMasterSerializer
 
 class LOBDetailAPIView(RetrieveUpdateAPIView):
