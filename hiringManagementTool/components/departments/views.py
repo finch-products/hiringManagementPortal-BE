@@ -18,7 +18,7 @@ class InternalDepartmentAPIView(APIView):
     
     def get(self, request):
         """Retrieve all InternalDepartment"""
-        demands = InternalDepartmentMaster.objects.all()
+        demands = InternalDepartmentMaster.objects.all().order_by('-idm_insertdate')
         serializer = InternalDepartmentSerializer(demands, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
