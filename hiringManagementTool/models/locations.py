@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class LocationMaster(models.Model):
@@ -22,6 +23,7 @@ class LocationMaster(models.Model):
         related_name="lcm_updated_records",
         help_text="Reference to the employee who last updated this record"
     )
+    lcm_insertdate = models.DateTimeField(help_text="Record Creation Timestamp", default=timezone.now)
 
     def __str__(self):
         return f"{self.lcm_name} ({self.lcm_state}, {self.lcm_country})"
