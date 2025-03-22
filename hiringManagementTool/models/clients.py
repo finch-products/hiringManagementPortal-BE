@@ -8,7 +8,7 @@ class ClientMaster(models.Model):
     clm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto Increment)")
     clm_clientid = models.CharField(max_length=50, unique=True,blank=True, 
         null=True,  help_text="Client unique ID (internal, manually inserted)")
-    clm_name = models.CharField(max_length=50, help_text="Client Name")
+    clm_name = models.CharField(max_length=50, unique=True, help_text="Client Name")
     clm_managername = models.CharField(max_length=50,blank=True,  
         null=True,  help_text="Client Manager Name")
     clm_clientemail = models.EmailField(unique=True,blank=True,  

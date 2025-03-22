@@ -4,7 +4,7 @@ from django.utils import timezone
 
 class LocationMaster(models.Model):
     lcm_id = models.AutoField(primary_key=True, help_text="Primary Key (Auto-generated for Location Manager)")
-    lcm_name = models.CharField(max_length=50, help_text="Location Manager Name")
+    lcm_name = models.CharField(max_length=50,  unique=True, help_text="Location Manager Name")
     lcm_state = models.CharField(max_length=50, help_text="State of the Location Manager")
     lcm_country = models.CharField(max_length=50, help_text="Country of the Location Manager")
     lcm_insertby = models.ForeignKey(
