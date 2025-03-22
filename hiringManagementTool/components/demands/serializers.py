@@ -122,9 +122,17 @@ class OpenDemandUpdateSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        """Efficiently update the instance"""
-        validated_data["dem_updatedate"] = datetime.now()
-        return super().update(instance, validated_data)
+        """Update only the provided fields while keeping others unchanged"""
+        validated_data.pop('dem_id', None)  # ✅ Remove `dem_id` from update
+        
+        for attr, value in validated_data.items():
+            if value is not None:  # ✅ Only update explicitly provided fields
+                setattr(instance, attr, value)
+
+        instance.dem_updatedate = datetime.now()  # ✅ Always update timestamp
+        instance.save(update_fields=validated_data.keys())  # ✅ Save only changed fields
+
+        return instance  # ✅ Return updated object with full data
 
 class AllOpenDemandsIdSerializer(serializers.ModelSerializer):
     class Meta:

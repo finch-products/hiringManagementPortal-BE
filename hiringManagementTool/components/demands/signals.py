@@ -42,10 +42,14 @@ def track_status_change(sender, instance, created, **kwargs):
                     field_value_normalized = unicodedata.normalize("NFKC", field_value).replace("\xa0", " ")
                     field_value_id = getattr(instance, f"{field}_id", None) if hasattr(instance, f"{field}_id") else None
 
+                    # Convert empty string or empty list string representation to None
+                    if field_value_normalized in ["", "[]"]:
+                     field_value_normalized = None
+
                     DemandHistory.objects.create(
                         dhs_dem_id=instance,
                         dhs_dsm_id=instance.dem_dsm_id,
-                        dhs_fromdata={"id": None, "value": ""},
+                        dhs_fromdata={"id": 'Null', "value": None},
                         dhs_todata={"id": field_value_id if field in fields_with_id else None, "value": field_value_normalized},
                         dhs_dsm_insertdate=now(),
                         dhs_log_msg=field_log_messages.get(field, field.title()),
@@ -74,11 +78,14 @@ def track_status_change(sender, instance, created, **kwargs):
                 field_value_str = str(getattr(instance, field, None))
                 fields_value = unicodedata.normalize("NFKC", field_value_str).replace("\xa0", " ")
                 
+                # Convert empty string or empty list string representation to None
+                if field_value_normalized in ["", "[]"]:
+                     field_value_normalized = None
+
                 new_value = str({
                     "id": field_value_id2 if field in fields_with_id else "Null",
                     "value": str(getattr(getattr(instance, field), "clm_name", None)) if field == 'dem_clm_id' else fields_value
                 })
-
                 if old_value != new_value:
                     changes_detected = True
                     print(f"⚡ Change Detected: {field} changed from {old_value} → {new_value}")
