@@ -31,9 +31,16 @@ class EmployeeMasterSerializer(serializers.ModelSerializer):
         fields = ['emp_id', 'emp_name']
 
 class InternalDepartmentSerializer(serializers.ModelSerializer):
-
-    idm_spoc_id = EmployeeMasterSerializer(read_only=True)
-    idm_deliverymanager_id = EmployeeMasterSerializer(read_only=True)
+    idm_spoc_id = serializers.PrimaryKeyRelatedField(
+        queryset=EmployeeMaster.objects.all(),
+        required=False, 
+        allow_null=True 
+    )
+    idm_deliverymanager_id = serializers.PrimaryKeyRelatedField(
+        queryset=EmployeeMaster.objects.all(),
+        required=False,  
+        allow_null=True  
+    )
 
     class Meta:
         model = InternalDepartmentMaster
