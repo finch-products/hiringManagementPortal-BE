@@ -3,14 +3,20 @@ from hiringManagementTool.components.roles.serializers import RoleMasterSerializ
 from rest_framework import serializers
 
 class EmployeeMasterSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = EmployeeMaster
         fields = '__all__'
 
+    def validate(self, data):
+        required_fields = ['emp_uniqueid', 'emp_name', 'emp_email', 'emp_insertby']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise serializers.ValidationError(f"{field} is required")
+        return data
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['rlm_name'] = instance.emp_rlm_id.rlm_name if instance.emp_rlm_id else None  # Add name dynamically
+        data['rlm_name'] = instance.emp_rlm_id.rlm_name if instance.emp_rlm_id else None
         data['lcm_name'] = instance.emp_lcm_id.lcm_name if instance.emp_lcm_id else None
         return data
 
