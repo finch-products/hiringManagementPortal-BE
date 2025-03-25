@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
 from hiringManagementTool.models.candidates import CandidateMaster
+from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
+from hiringManagementTool.models.locations import LocationMaster
 from .serializers import CandidateDemandLinkSerializer, OpenDemandResponseSerializer, NonlinkedResponseSerializer
 import logging
 logger = logging.getLogger(__name__)
@@ -100,3 +102,60 @@ class CandidateDemandLinkAPIView(APIView):
             return Response({"message": "Candidates linked successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class GetCandidatesdetailByDemandID(APIView):
+    def post(self, request):
+        try:
+            dem_id = request.data.get('dem_id')
+            if not dem_id:
+                return Response({"error": "dem_id is required"}, status=400)
+
+            # Fetch candidate data with status and location details
+            candidates_data = CandidateDemandLink.objects.filter(cdl_dem_id=dem_id)\
+                .select_related('cdl_cdm_id', 'cdl_csm_id', 'cdl_cdm_id__cdm_location_id')\
+                .values(
+                    'cdl_cdm_id__cdm_id',
+                    'cdl_cdm_id__cdm_name',
+                    'cdl_cdm_id__cdm_email',
+                    'cdl_cdm_id__cdm_phone',
+                    'cdl_cdm_id__cdm_keywords',
+                    'cdl_cdm_id__cdm_location_id',
+                    'cdl_cdm_id__cdm_profile',
+                    'cdl_cdm_id__cdm_insertdate',
+                    'cdl_cdm_id__cdm_updatedate',
+                    'cdl_csm_id__csm_code',
+                    'cdl_csm_id__csm_id'
+                )
+
+            # Fetch location data
+            location_data = {loc.lcm_id: loc.lcm_name for loc in LocationMaster.objects.all()}
+
+            # Initialize status-based dictionary
+            status_data = {status.csm_code: [] for status in CandidateStatusMaster.objects.all()}
+
+            # Populate the data
+            for candidate in candidates_data:
+                candidate_info = {
+                    "cdm_id": candidate['cdl_cdm_id__cdm_id'],
+                    "name": candidate['cdl_cdm_id__cdm_name'],
+                    "email": candidate['cdl_cdm_id__cdm_email'],
+                    "phone": candidate['cdl_cdm_id__cdm_phone'],
+                    "keywords": candidate['cdl_cdm_id__cdm_keywords'],
+                    "status": {
+                        "id": candidate['cdl_csm_id__csm_id'],
+                        "text": candidate['cdl_csm_id__csm_code']
+                    },
+                    "location": location_data.get(candidate['cdl_cdm_id__cdm_location_id'], "Unknown"),
+                    "profile": candidate['cdl_cdm_id__cdm_profile'],
+                    "insertdate": candidate['cdl_cdm_id__cdm_insertdate'].strftime('%Y-%m-%d') if candidate['cdl_cdm_id__cdm_insertdate'] else None,
+                    "updatedate": candidate['cdl_cdm_id__cdm_updatedate'].strftime('%Y-%m-%d') if candidate['cdl_cdm_id__cdm_updatedate'] else None,
+                }
+                status_data[candidate['cdl_csm_id__csm_code']].append(candidate_info)
+
+            return Response({
+                "dem_id": dem_id,
+                "candidates_by_status": status_data
+            })
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
