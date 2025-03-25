@@ -4,8 +4,9 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
+from hiringManagementTool.models.locations import LocationMaster
 from hiringManagementTool.models.candidates import CandidateMaster
-from .serializers import CandidateDemandLinkSerializer, OpenDemandResponseSerializer, NonlinkedResponseSerializer
+from .serializers import CandidateDemandLinkSerializer, OpenDemandResponseSerializer, NonlinkedResponseSerializer, CandidatesDetailbyDemIdSerializer
 import logging
 logger = logging.getLogger(__name__)
 
@@ -100,3 +101,19 @@ class CandidateDemandLinkAPIView(APIView):
             return Response({"message": "Candidates linked successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetCandidatesDetailByDemandID(APIView):
+    def post(self, request):
+        try:
+            dem_id = request.data.get('dem_id')
+            if not dem_id:
+                return Response({"error": "dem_id is required"}, status=400)
+
+            serializer = CandidatesDetailbyDemIdSerializer()  # Initialize the serializer
+            result = serializer.get_candidates_by_demand(dem_id)
+
+            return Response(result)
+        except Exception as e:
+            # More specific error handling
+            return Response({"error": str(e)}, status=500)
