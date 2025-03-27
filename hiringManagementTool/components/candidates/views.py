@@ -1,6 +1,7 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
-from hiringManagementTool.components.candidates.serializers import CandidateMasterSerializer, CandidateHistorySerializer, AllCandidateMasterIdSerializer
+from hiringManagementTool.components.candidates.serializers import CandidateMasterSerializer, CandidateHistorySerializer, AllCandidateMasterIdSerializer, CandidateSearchSerializer
 from hiringManagementTool.models.candidates import CandidateMaster
+from hiringManagementTool.models.locations import LocationMaster
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -112,3 +113,36 @@ class AllCandidateAPIView(APIView):
         queryset = CandidateMaster.objects.all()
         serializer = AllCandidateMasterIdSerializer(queryset, many=True)
         return Response(serializer.data)
+
+class CandidateSearchView(APIView):
+    def post(self, request):
+        serializer = CandidateSearchSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                candidates = serializer.search_candidates()
+                location_data = {loc.lcm_id: loc.lcm_name for loc in LocationMaster.objects.all()}
+
+                candidates_data = []
+                for candidate in candidates:
+                    candidates_data.append({
+                        "cdm_id": candidate.cdm_id,
+                        "name": candidate.cdm_name,
+                        "email": candidate.cdm_email,
+                        "phone": candidate.cdm_phone,
+                        "keywords": candidate.cdm_keywords,
+                        "status": {
+                            "id": candidate.cdm_csm_id.csm_id if candidate.cdm_csm_id else None,
+                            "text": candidate.cdm_csm_id.csm_code if candidate.cdm_csm_id else None,
+                        },
+                        "location": location_data.get(candidate.cdm_location_id, "Unknown"),
+                        "profile": candidate.cdm_profile.url if candidate.cdm_profile else None,  # Corrected Line
+                        "insertdate": candidate.cdm_insertdate.strftime('%Y-%m-%d') if candidate.cdm_insertdate else None,
+                        "updatedate": candidate.cdm_updatedate.strftime('%Y-%m-%d') if candidate.cdm_updatedate else None,
+                    })
+
+                return Response({"candidates": candidates_data}, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

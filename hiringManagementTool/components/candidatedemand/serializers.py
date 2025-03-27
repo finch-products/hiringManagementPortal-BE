@@ -5,6 +5,7 @@ from rest_framework import serializers
 from hiringManagementTool.models.employees import EmployeeMaster
 from hiringManagementTool.models.lobs import LOBMaster
 from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
+from hiringManagementTool.models.locations import LocationMaster
 
 class ClientSerializer(serializers.Serializer):
     clm_id = serializers.IntegerField(source='dem_clm_id.clm_id')
@@ -205,3 +206,64 @@ class CandidateDemandLinkSerializer(serializers.ModelSerializer):
             validated_data['cdl_csm_id'] = default_status
 
         return super().create(validated_data)
+
+class CandidatesetailSerializer(serializers.Serializer):
+    cdm_id = serializers.CharField()
+    name = serializers.CharField()
+    email = serializers.EmailField()
+    phone = serializers.CharField()
+    keywords = serializers.CharField()
+    status = serializers.DictField()
+    location = serializers.CharField()
+    profile = serializers.CharField(allow_blank=True, required=False)
+    insertdate = serializers.DateField(format='%Y-%m-%d', required=False)
+    updatedate = serializers.DateField(format='%Y-%m-%d', required=False)
+
+class CandidatesDetailbyDemIdSerializer(serializers.Serializer):
+    dem_id = serializers.CharField()
+    candidates_by_status = serializers.DictField()
+
+    def get_candidates_by_demand(self, dem_id):
+        candidates_data = CandidateDemandLink.objects.filter(cdl_dem_id=dem_id) \
+            .select_related('cdl_cdm_id', 'cdl_csm_id', 'cdl_cdm_id__cdm_location_id') \
+            .values(
+                'cdl_cdm_id__cdm_id',  # Corrected: Access related model fields
+                'cdl_cdm_id__cdm_name',
+                'cdl_cdm_id__cdm_email',
+                'cdl_cdm_id__cdm_phone',
+                'cdl_cdm_id__cdm_keywords',
+                'cdl_cdm_id__cdm_location_id',
+                'cdl_cdm_id__cdm_profile',
+                'cdl_cdm_id__cdm_insertdate',
+                'cdl_cdm_id__cdm_updatedate',
+                'cdl_csm_id__csm_code',
+                'cdl_csm_id__csm_id'
+            )
+
+        location_data = {loc.lcm_id: loc.lcm_name for loc in LocationMaster.objects.all()}
+        status_data = {}  # Initialize as a regular dictionary
+
+        # Get all status codes upfront to handle cases where a status might have no candidates
+        for status in CandidateStatusMaster.objects.all():
+            status_data[status.csm_code] = []
+
+        for candidate in candidates_data:
+            candidate_info = {
+                "cdm_id": candidate['cdl_cdm_id__cdm_id'],
+                "name": candidate['cdl_cdm_id__cdm_name'],
+                "email": candidate['cdl_cdm_id__cdm_email'],
+                "phone": candidate['cdl_cdm_id__cdm_phone'],
+                "keywords": candidate['cdl_cdm_id__cdm_keywords'],
+                "status": {
+                    "id": candidate['cdl_csm_id__csm_id'],
+                    "text": candidate['cdl_csm_id__csm_code']
+                },
+                "location": location_data.get(candidate['cdl_cdm_id__cdm_location_id'], "Unknown"),
+                "profile": candidate['cdl_cdm_id__cdm_profile'],
+                "insertdate": candidate['cdl_cdm_id__cdm_insertdate'].strftime('%Y-%m-%d') if candidate['cdl_cdm_id__cdm_insertdate'] else None,
+                "updatedate": candidate['cdl_cdm_id__cdm_updatedate'].strftime('%Y-%m-%d') if candidate['cdl_cdm_id__cdm_updatedate'] else None,
+            }
+            # Use the status code directly as the key
+            status_data[candidate['cdl_csm_id__csm_code']].append(candidate_info)
+
+        return {"dem_id": dem_id, "candidates_by_status": status_data}

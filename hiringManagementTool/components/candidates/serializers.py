@@ -8,6 +8,8 @@ from rest_framework import serializers
 from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
 from rest_framework import serializers
 from hiringManagementTool.components.locations.serializers import LocationMasterSerializer
+from django.db.models import Q
+from hiringManagementTool.models.locations import LocationMaster
 from django.db.models import F
 from itertools import groupby
 from operator import itemgetter
@@ -181,3 +183,58 @@ class AllCandidateMasterIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = CandidateMaster
         fields = ['cdm_id']
+
+
+class CandidateSearchSerializer(serializers.Serializer):
+    cdm_id = serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
+    email = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
+    keywords = serializers.CharField(required=False)
+    skills = serializers.CharField(required=False)
+    location = serializers.CharField(required=False)
+    status = serializers.CharField(required=False)
+
+    def search_candidates(self):
+        search_params = self.validated_data
+        query = Q()
+
+        if search_params.get('cdm_id'):
+            query &= Q(cdm_id=search_params['cdm_id'].strip())
+
+        if search_params.get('name'):
+            query &= Q(cdm_name__icontains=search_params['name'].strip())
+
+        if search_params.get('email'):
+            query &= Q(cdm_email__icontains=search_params['email'].strip())
+
+        if search_params.get('phone'):
+            query &= Q(cdm_phone__icontains=search_params['phone'].strip())
+
+        if search_params.get('keywords'):
+            keywords = [kw.strip() for kw in search_params['keywords'].split(',')]
+            keyword_query = Q()
+            for kw in keywords:
+                keyword_query |= Q(cdm_keywords__icontains=kw)
+            query &= keyword_query
+
+        if search_params.get('skills'):
+            skills = [skill.strip() for skill in search_params['skills'].split(',')]
+            skill_query = Q()
+            for skill in skills:
+                # Corrected line below:
+                skill_query |= Q(cdm_keywords__icontains=skill) | Q(cdm_description__icontains=skill)
+            query &= skill_query
+
+        if search_params.get('location'):
+            location = LocationMaster.objects.filter(lcm_name__iexact=search_params['location'].strip()).first()
+            if location:
+                query &= Q(cdm_location_id=location.lcm_id)
+
+        if search_params.get('status'):
+            candidate_status = CandidateStatusMaster.objects.filter(csm_code=search_params['status']).first()
+            if candidate_status:
+                query &= Q(cdm_csm_id=candidate_status.csm_id)
+
+        candidates = CandidateMaster.objects.filter(query, cdm_isactive=1).select_related('cdm_location', 'cdm_csm_id')
+        return candidates
