@@ -18,7 +18,7 @@ def track_status_change(sender, instance, created, **kwargs):
             'dem_ctoolnumber', 'dem_ctooldate', 'dem_position_name', 'dem_clm_id', 'dem_lcm_id', 'dem_validtill', 
             'dem_skillset', 'dem_lob_id', 'dem_idm_id', 'dem_dsm_id', 'dem_positions', 'dem_rrnumber', 'dem_jrnumber', 
             'dem_rrgade', 'dem_isactive', 'dem_gcblevel', 'dem_assigned_to', 'dem_jd', 'dem_comment', 'dem_isreopened',
-            'dem_insertdate', 'dem_insertby_id', 'dem_updatedate', 'dem_updateby_id', 'dem_position_location'
+            'dem_insertdate', 'dem_insertby_id', 'dem_updatedate', 'dem_updateby_id', 'dem_position_location','dem_mandatoryskill'
         ]
 
         field_log_messages = {
@@ -29,7 +29,8 @@ def track_status_change(sender, instance, created, **kwargs):
             "dem_gcblevel": "GCB Level", "dem_assigned_to": "Assigned To", "dem_jd": "Job Description",
             "dem_comment": "Comments", "dem_isreopened": "Reopened Status", "dem_insertdate": "Insert Date",
             "dem_insertby_id": "Inserted by Employee", "dem_updatedate": "Update Date",
-            "dem_updateby_id": "Updated by Employee", "dem_position_location": "Position Location"
+            "dem_updateby_id": "Updated by Employee", "dem_position_location": "Position Location",
+            "dem_mandatoryskill":"Mandatoryskills"
         }
 
         fields_with_id = ['dem_dsm_id', 'dem_clm_id', 'dem_idm_id', 'dem_insertby_id', 'dem_lcm_id', 'dem_lob_id', 'dem_updateby_id']
