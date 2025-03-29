@@ -67,10 +67,21 @@ class OpenDemandSerializer(serializers.ModelSerializer):
     dem_dsm_id = serializers.PrimaryKeyRelatedField(queryset=DemandStatusMaster.objects.only("dsm_id"), write_only=True, required=False)
     dem_position_location = serializers.JSONField(required=False, default=list)
 
-    #dem_position_location = serializers.PrimaryKeyRelatedField(queryset=LocationMaster.objects.all(), many=True, write_only=True, required=False)
+    def to_representation(self, instance):
+        """Custom representation to fetch location names from LocationMaster based on IDs"""
+        data = super().to_representation(instance)
 
-   
+        # Fetching the stored location IDs
+        location_ids = data.get("dem_position_location", [])
 
+        if isinstance(location_ids, list):
+            locations = LocationMaster.objects.filter(lcm_id__in=location_ids).values("lcm_id", "lcm_name")
+            data["dem_location_position"] = list(locations)  # Format it as required
+        else:
+            data["dem_location_position"] = []
+
+        return data
+    
     def create(self, validated_data):
         jd_present = validated_data.get("dem_jd")
         status_key = "OPEN" if jd_present else "JD_NOT_RECEIVED"
@@ -100,7 +111,7 @@ class OpenDemandUpdateSerializer(serializers.ModelSerializer):
         fields = ['dem_id', 'dem_updateby_id', 'dem_dsm_id', 'dem_clm_id', 'dem_lob_id', 
                   'dem_idm_id', 'dem_lcm_id', 'dem_updatedate', 'dem_ctooldate', 'dem_validtill', 'dem_skillset',
     'dem_positions', 'dem_rrnumber', 'dem_jrnumber', 'dem_rrgade', 'dem_gcblevel',
-    'dem_jd', 'dem_comment', 'dem_isreopened', 'dem_isactive', 'dem_position_name', 'dem_position_location']
+    'dem_jd', 'dem_comment', 'dem_isreopened', 'dem_isactive', 'dem_position_name', 'dem_position_location','dem_mandatoryskill']
 
     def validate(self, data):
         """Custom validation for demand status and foreign keys"""
