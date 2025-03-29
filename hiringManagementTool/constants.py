@@ -1,3 +1,5 @@
+from enum import Enum
+
 # Define Role Names for Easy Management
 ROLE_PMO = "PMO"
 ROLE_CLIENT_PARTNER = "Client Partner"
@@ -42,3 +44,9 @@ CANDIDATE_STATUS = {
     "ON_HOLD": "On Hold",
     "CLIENT_FEEDBACK_PROVIDED": "Client Feedback Provided",
 }
+
+class InterviewStatus(Enum):
+    SCHEDULED = 1
+    RESCHEDULED = 2
+    COMPLETED = 3
+    CANCELLED = 4

@@ -1,5 +1,6 @@
 from django.db import models
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
+from hiringManagementTool.constants import InterviewStatus
 
 class InterviewSchedulingTable(models.Model):
     ist_id = models.AutoField(primary_key=True)
@@ -15,12 +16,10 @@ class InterviewSchedulingTable(models.Model):
     ist_interviewround = models.IntegerField()
     ist_interviewername = models.CharField(max_length=255)
     ist_intervieweremail = models.CharField(max_length=255)
-    ist_interviewstatus = models.CharField(max_length=50, choices=[
-        ('Scheduled', 'Scheduled'),
-        ('Completed', 'Completed'),
-        ('Cancelled', 'Cancelled'),
-        ('Rescheduled', 'Rescheduled'),
-    ])
+    ist_interviewstatus = models.PositiveSmallIntegerField(
+        choices=[(status.value, status.name) for status in InterviewStatus],
+        default=InterviewStatus.SCHEDULED.value
+    )
     ist_remarks = models.TextField(blank=True, null=True)
     ist_createdate = models.DateTimeField(auto_now_add=True)
     ist_updatedate= models.DateTimeField(auto_now=True)
