@@ -7,58 +7,58 @@ from django.utils import timezone
 from django.db import transaction
 from django.utils.decorators import method_decorator
 import datetime
-from hiringManagementTool.components.interviewscheduling.serializers import InterviewSchedulingSerializer, InterviewSchedulingUpdateSerializer, GetCdlIdSerializer
+from hiringManagementTool.components.interviewscheduling.serializers import InterviewSchedulingSerializer, GetCdlIdSerializer, InterviewStatusSerializer, InterviewTypeSerializer
 from hiringManagementTool.models.interview import InterviewSchedulingTable
 from hiringManagementTool.models.candidatedemandhistory import CandidateDemandHistory
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
-from hiringManagementTool.constants import InterviewStatus
+from hiringManagementTool.constants import InterviewStatus, InterviewType
 from rest_framework.views import APIView
 
 class InterviewSchedulingAPIView(ListCreateAPIView):
     queryset = InterviewSchedulingTable.objects.all()
-    serializer_class = InterviewSchedulingSerializer
+    serializer_class = InterviewSchedulingSerializer  # Add this line
 
-    @method_decorator(transaction.atomic)
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    def get(self, request):
+        interviews = InterviewSchedulingTable.objects.all()
+        serializer = self.serializer_class(interviews, many=True)
+        return Response(serializer.data)
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             interview = serializer.save()
-
-            # Fetch the CandidateDemandLink object
             cdl = interview.ist_cdl
 
-            # Prepare history data
+            # Convert date and time fields to ISO format
             history_data = {
-                'ist_interviewdate': interview.ist_interviewdate,
-                'ist_interviewtime': interview.ist_interviewtime,
+                'ist_interviewdate': interview.ist_interviewdate.isoformat() if interview.ist_interviewdate else None,
+                'ist_interview_start_time': interview.ist_interview_start_time.isoformat() if interview.ist_interview_start_time else None,
+                'ist_interview_end_time': interview.ist_interview_end_time.isoformat() if interview.ist_interview_end_time else None,
+                'ist_timezone': interview.ist_timezone,
                 'ist_interviewtype': interview.ist_interviewtype,
                 'ist_interviewround': interview.ist_interviewround,
-                'ist_interviewername': interview.ist_interviewername,
-                'ist_intervieweremail': interview.ist_intervieweremail,
+                'ist_interviewers': interview.ist_interviewers,
+                'ist_meeting_details': interview.ist_meeting_details,
                 'ist_interviewstatus': interview.ist_interviewstatus,
                 'ist_remarks': interview.ist_remarks,
             }
 
-            # Convert datetime and time fields to ISO format
-            processed_data = {key: (value.isoformat() if isinstance(value, (datetime.date, datetime.time, datetime.datetime)) else value) for key, value in history_data.items()}
-
             # Insert into CandidateDemandHistory
             CandidateDemandHistory.objects.create(
                 cdh_insertdate=timezone.now(),
-                cdh_fromdata= {"id": "None", "value": "None"},
-                cdh_todata=processed_data,
+                cdh_fromdata={"id": "None", "value": "None"},
+                cdh_todata=history_data,
                 cdh_cdm_id=cdl.cdl_cdm_id,
                 cdh_dem_id=cdl.cdl_dem_id,
                 cdh_csm_id=None
             )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-class InterviewUpdateAPIView(views.APIView):
+'''class InterviewUpdateAPIView(views.APIView):
     serializer_class = InterviewSchedulingUpdateSerializer
 
     @method_decorator(transaction.atomic)
@@ -126,7 +126,7 @@ class InterviewUpdateAPIView(views.APIView):
         )
 
         response_serializer = InterviewSchedulingSerializer(interview)
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)'''
 
 class GetCdlIdAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -142,3 +142,15 @@ class GetCdlIdAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except CandidateDemandLink.DoesNotExist:
             return Response({'error': 'CandidateDemandLink not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+class InterviewStatusDropdownView(APIView):
+    def get(self, request):
+        statuses = [{'value': status.value, 'label': status.name} for status in InterviewStatus]
+        serializer = InterviewStatusSerializer(statuses, many=True)
+        return Response(serializer.data)
+
+class InterviewTypeDropdownView(APIView):
+    def get(self, request):
+        types = [{'value': interview_type.value, 'label': interview_type.name} for interview_type in InterviewType]
+        serializer = InterviewTypeSerializer(types, many=True)
+        return Response(serializer.data)
