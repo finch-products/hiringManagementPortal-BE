@@ -50,3 +50,11 @@ class InterviewStatus(Enum):
     RESCHEDULED = 2
     COMPLETED = 3
     CANCELLED = 4
+
+class InterviewType(Enum):
+    VIDEO = 1
+    ON_SITE = 2
+    PHONE = 3
+    GOOGLE_MEET = 4 
+    SKYPE = 5       
+    CODING_TEST = 6 
