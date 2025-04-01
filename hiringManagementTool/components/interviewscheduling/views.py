@@ -6,13 +6,17 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.db import transaction
 from django.utils.decorators import method_decorator
-import datetime
-from hiringManagementTool.components.interviewscheduling.serializers import InterviewSchedulingSerializer, GetCdlIdSerializer, InterviewStatusSerializer, InterviewTypeSerializer
+from datetime import datetime
+from hiringManagementTool.components.interviewscheduling.serializers import InterviewSchedulingSerializer, GetCdlIdSerializer, InterviewStatusSerializer, InterviewTypeSerializer, InterviewSchedulingUpdateSerializer, TimezoneSerializer
 from hiringManagementTool.models.interview import InterviewSchedulingTable
 from hiringManagementTool.models.candidatedemandhistory import CandidateDemandHistory
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
 from hiringManagementTool.constants import InterviewStatus, InterviewType
 from rest_framework.views import APIView
+import pytz
+import json
+from datetime import datetime, date, time
+
 
 class InterviewSchedulingAPIView(ListCreateAPIView):
     queryset = InterviewSchedulingTable.objects.all()
@@ -58,76 +62,148 @@ class InterviewSchedulingAPIView(ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-'''class InterviewUpdateAPIView(views.APIView):
+class InterviewUpdateAPIView(views.APIView):
     serializer_class = InterviewSchedulingUpdateSerializer
 
     @method_decorator(transaction.atomic)
     def put(self, request, *args, **kwargs):
+        # Use the context to pass the instance for partial updates if needed,
+        # but for this approach, we fetch it after validation.
         serializer = self.serializer_class(data=request.data)
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         validated_data = serializer.validated_data
-        ist_id = validated_data.pop('ist_id')
+        ist_id = validated_data.pop('ist_id') # Get ID and remove from data to update
 
         try:
+            # Fetch the existing interview instance
+            # Use select_for_update() for locking if high concurrency is expected
             interview = InterviewSchedulingTable.objects.select_related('ist_cdl').get(ist_id=ist_id)
+            # interview = InterviewSchedulingTable.objects.select_for_update().select_related('ist_cdl').get(ist_id=ist_id) # With locking
         except InterviewSchedulingTable.DoesNotExist:
             return Response({'error': f'Interview with ist_id {ist_id} not found'}, status=status.HTTP_404_NOT_FOUND)
-        except CandidateDemandLink.DoesNotExist:
-            return Response({'error': f'Associated CandidateDemandLink for interview ist_id {ist_id} not found'}, status=status.HTTP_400_BAD_REQUEST)
 
-        fields_to_track = ['ist_interviewdate', 'ist_interviewtime', 'ist_interviewtype', 'ist_interviewstatus']
+        fields_to_track = [
+            'ist_interviewdate',
+            'ist_interview_start_time', # Updated name
+            'ist_interview_end_time',   # Added field
+            'ist_timezone',             # Added field
+            'ist_interviewtype',
+            'ist_interviewstatus',
+            'ist_interviewround',       # Added field
+            'ist_interviewers',         # Added field
+            'ist_remarks',              # Added field
+            'ist_meeting_details',      # Added field
+        ]
 
-        history_old_data = {
-            field: getattr(interview, field) for field in fields_to_track
-        }
+        # Store old values for history tracking *before* making changes
+        history_old_data = {}
+        for field in fields_to_track:
+             # Use gettatr default value None in case field doesn't exist (though it should)
+             history_old_data[field] = getattr(interview, field, None)
 
         changed_fields_flag = False
-        fields_actually_updated = {}
+        fields_actually_updated_for_history = {} # Store detailed old/new for history record
 
-        for field_name in fields_to_track:
-            if field_name in validated_data:
-                old_value = getattr(interview, field_name)
-                new_value = validated_data[field_name]
+        # Iterate through the fields defined in the serializer that are present in validated_data
+        for field_name, new_value in validated_data.items():
+            # Skip if the field is not meant to be tracked or updated directly this way
+            if field_name not in fields_to_track:
+                continue
 
-                # Convert status name to value using Enum
-                if field_name == 'ist_interviewstatus' and isinstance(new_value, str):
-                    try:
-                        new_value = InterviewStatus[new_value].value
-                    except KeyError:
-                        return Response({'error': f'Invalid status: {new_value}'}, status=status.HTTP_400_BAD_REQUEST)
+            old_value = getattr(interview, field_name, None)
 
-                if old_value != new_value:
-                    setattr(interview, field_name, new_value)
-                    changed_fields_flag = True
-                    fields_actually_updated[field_name] = {'old': old_value, 'new': new_value}
+            # --- Handle Enum Conversions (Name from request to Value for DB) ---
+            converted_new_value = new_value # Start with the validated value
+            if field_name == 'ist_interviewstatus' and isinstance(new_value, str):
+                try:
+                    converted_new_value = InterviewStatus[new_value].value
+                except KeyError:
+                    # This should ideally be caught by serializer choices, but double-check
+                    return Response({'error': {field_name: f'Invalid status name: {new_value}'}}, status=status.HTTP_400_BAD_REQUEST)
+            elif field_name == 'ist_interviewtype' and isinstance(new_value, str):
+                try:
+                    converted_new_value = InterviewType[new_value].value
+                except KeyError:
+                     # This should ideally be caught by serializer choices, but double-check
+                    return Response({'error': {field_name: f'Invalid type name: {new_value}'}}, status=status.HTTP_400_BAD_REQUEST)
+
+            # --- Compare old and new values ---
+            # Special handling for JSON comparison might be needed if order matters or complex structures
+            # Default Python comparison usually works well for dicts/lists if order isn't significant.
+            if old_value != converted_new_value:
+                setattr(interview, field_name, converted_new_value)
+                changed_fields_flag = True
+                # Store old/new values for the history record's 'todata' field
+                fields_actually_updated_for_history[field_name] = {
+                    'old': self.format_for_history(old_value),
+                    'new': self.format_for_history(converted_new_value)
+                }
 
         if not changed_fields_flag:
             return Response({"message": "No changes detected based on input. Update not performed."}, status=status.HTTP_200_OK)
 
+        # --- Update timestamp and save ---
+        interview.ist_updatedate = timezone.now().date() # Or use auto_now=True in model
         interview.save()
-        history_new_data = {
-            field: getattr(interview, field) for field in fields_to_track
+
+        # --- Create History Record ---
+        # Fetch new values *after* saving, especially if model defaults/triggers exist
+        history_new_data_from_db = {
+            field: getattr(interview, field, None) for field in fields_to_track
         }
 
-        processed_old_data = {key: (value.isoformat() if isinstance(value, (datetime.date, datetime.time, datetime.datetime)) else value) for key, value in history_old_data.items()}
-        processed_new_data = {key: (value.isoformat() if isinstance(value, (datetime.date, datetime.time, datetime.datetime)) else value) for key, value in history_new_data.items()}
+        # Prepare data for JSON storage in history model
+        processed_old_data_for_history = {
+        field: self.format_for_history(history_old_data[field])
+        for field in fields_actually_updated_for_history
+        }
+
+        # Use the detailed changes for the 'todata' field if that's the requirement
+        # Or use the full new state like the old data if needed
+        processed_new_data_for_history = {
+        field: self.format_for_history(getattr(interview, field))
+        for field in fields_actually_updated_for_history
+        }
 
         cdl = interview.ist_cdl
+        if cdl: # Ensure cdl is not None
+            CandidateDemandHistory.objects.create(
+                cdh_insertdate=timezone.now(),
+                # Store *only* the fields that changed, or the full before/after state?
+                # Option 1: Store full state before change
+                cdh_fromdata=processed_old_data_for_history,
+                 # Option 2: Store detailed changes OR full state after change
+                cdh_todata=processed_new_data_for_history, # Store only changes
+                # cdh_todata=processed_new_data_for_history, # Store full state after change
+                cdh_cdm_id=cdl.cdl_cdm_id,
+                cdh_dem_id=cdl.cdl_dem_id,
+                cdh_csm_id=None # Assuming this is correct based on original code
+                # Add user tracking if available: cdh_updated_by=request.user
+            )
+        else:
+             # Log a warning or handle cases where cdl might be missing unexpectedly
+             print(f"Warning: CandidateDemandLink (ist_cdl) missing for Interview ist_id {ist_id}. History not recorded.")
 
-        CandidateDemandHistory.objects.create(
-            cdh_insertdate=timezone.now(),
-            cdh_fromdata=processed_old_data,
-            cdh_todata=processed_new_data,
-            cdh_cdm_id=cdl.cdl_cdm_id,
-            cdh_dem_id=cdl.cdl_dem_id,
-            cdh_csm_id=None
-        )
 
-        response_serializer = InterviewSchedulingSerializer(interview)
-        return Response(response_serializer.data, status=status.HTTP_200_OK)'''
+        # --- Return Success Response ---
+        response_serializer = InterviewSchedulingSerializer(interview) # Use the read serializer
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
+    def format_for_history(self, value):
+        """Helper function to format values consistently for JSON history field."""
+        if isinstance(value, (date, time, datetime)):
+            return value.isoformat()
+        # Add specific handling for Enums if they are stored directly
+        elif isinstance(value, (InterviewStatus, InterviewType)):
+             return value.value # Store the numeric value
+        # elif isinstance(value, (list, dict)):
+             # return json.dumps(value) # Ensure complex types are stored as JSON strings if needed
+        # For most other types (int, str, bool, None, simple JSON), direct use is fine
+        return value
+    
 class GetCdlIdAPIView(APIView):
     def post(self, request, *args, **kwargs):
         candidate_id = request.data.get('candidate_id')
@@ -154,3 +230,18 @@ class InterviewTypeDropdownView(APIView):
         types = [{'value': interview_type.value, 'label': interview_type.name} for interview_type in InterviewType]
         serializer = InterviewTypeSerializer(types, many=True)
         return Response(serializer.data)
+
+class TimezoneDropdownAPIView(APIView):
+    def get(self, request):
+        now = datetime.utcnow()
+        timezone_choices = []
+
+        for tz in pytz.all_timezones:
+            timezone = pytz.timezone(tz)
+            localized_time = now.astimezone(timezone)
+            timezone_name = localized_time.tzname()
+            display_name = f"{tz} ({timezone_name})"
+            timezone_choices.append({"label": display_name})
+
+        serializer = TimezoneSerializer(timezone_choices, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

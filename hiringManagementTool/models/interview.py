@@ -5,20 +5,6 @@ from hiringManagementTool.constants import InterviewStatus, InterviewType
 import pytz
 from datetime import datetime
 
-def get_timezone_display():
-    now = datetime.utcnow()
-    timezone_choices = []
-
-    for tz in pytz.all_timezones:
-        timezone = pytz.timezone(tz)
-        localized_time = now.astimezone(timezone)
-        timezone_name = localized_time.tzname()
-
-        # Format example: "Asia/Kolkata (Indian Standard Time - IST)"
-        display_name = f"{tz} ({timezone_name})"
-        timezone_choices.append((tz, display_name))
-    
-    return timezone_choices
 
 class InterviewSchedulingTable(models.Model):
     ist_id = models.AutoField(primary_key=True)
@@ -27,10 +13,9 @@ class InterviewSchedulingTable(models.Model):
     ist_interview_start_time = models.TimeField(null=True, blank=True)
     ist_interview_end_time = models.TimeField(null=True, blank=True)
     ist_timezone = models.CharField(
-    max_length=50,
-    choices=get_timezone_display(),
-    default="UTC",
-    help_text="Select the time zone for the interview."
+        max_length=50,
+        default="UTC",
+        help_text="Enter the time zone for the interview (e.g., Asia/Kolkata (IST))."
     )
     ist_interviewtype = models.PositiveSmallIntegerField(
         choices=[(interview_type.value, interview_type.name) for interview_type in InterviewType],
