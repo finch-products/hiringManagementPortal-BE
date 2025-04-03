@@ -38,6 +38,14 @@ class InterviewSchedulingSerializer(serializers.ModelSerializer):
     def get_ist_timezone_display(self, obj):
         # Assuming ist_timezone is stored directly as a string
         return obj.ist_timezone
+    
+    def to_representation(self, instance):
+        """
+        Override to_representation method to handle `next` filter.
+        """
+        representation = super().to_representation(instance)
+        representation['ist_interviewdate'] = instance.ist_interviewdate.isoformat()
+        return representation
 
 
 # --- Updated InterviewSchedulingUpdateSerializer ---
@@ -123,3 +131,45 @@ from rest_framework import serializers
 
 class TimezoneSerializer(serializers.Serializer):
     label = serializers.CharField()
+    
+class InterviewDetailsFilterSerializer(serializers.Serializer):
+    filter_type = serializers.ChoiceField(choices=["all", "current", "next_one", "next_all"], required=False, default="all")
+    candidate_id = serializers.CharField(required=False)
+    demand_id = serializers.CharField(required=False)
+    cdl_id = serializers.IntegerField(required=False)
+
+    def get_interviews(self):
+        filter_type = self.validated_data.get("filter_type", "all")
+        candidate_id = self.validated_data.get("candidate_id", None)
+        demand_id = self.validated_data.get("demand_id", None)
+        cdl_id = self.validated_data.get("cdl_id", None)
+
+        now = timezone.now()
+
+        # Get base queryset
+        interviews = InterviewSchedulingTable.objects.all()
+
+        if filter_type == "current":
+            interviews = interviews.filter(ist_interviewdate=now.date())
+        elif filter_type in ["next_one", "next_all"]:
+            interviews = interviews.filter(ist_interviewdate__gt=now.date()).order_by('ist_interviewdate', 'ist_interview_start_time')
+
+        # Apply additional filters on QuerySet
+        if candidate_id:
+            interviews = interviews.filter(
+                ist_cdl_id__in=CandidateDemandLink.objects.filter(cdl_cdm_id=candidate_id).values_list('cdl_id', flat=True)
+            )
+
+        if demand_id:
+            interviews = interviews.filter(
+                ist_cdl_id__in=CandidateDemandLink.objects.filter(cdl_dem_id=demand_id).values_list('cdl_id', flat=True)
+            )
+
+        if cdl_id:
+            interviews = interviews.filter(ist_cdl_id=cdl_id)
+
+        # Only slice after all filters have been applied
+        if filter_type == "next_one":
+            interviews = interviews[:1]
+
+        return list(interviews)  # Convert to list only at the end
