@@ -7,7 +7,9 @@ from django.utils import timezone
 from django.db import transaction
 from django.utils.decorators import method_decorator
 from datetime import datetime
-from hiringManagementTool.components.interviewscheduling.serializers import InterviewSchedulingSerializer, GetCdlIdSerializer, InterviewStatusSerializer, InterviewTypeSerializer, InterviewSchedulingUpdateSerializer, TimezoneSerializer
+from hiringManagementTool.models.demands import OpenDemand
+from hiringManagementTool.models.candidates import CandidateMaster
+from hiringManagementTool.components.interviewscheduling.serializers import InterviewSchedulingSerializer, GetCdlIdSerializer, InterviewStatusSerializer, InterviewTypeSerializer, InterviewSchedulingUpdateSerializer, TimezoneSerializer, InterviewDetailsFilterSerializer
 from hiringManagementTool.models.interview import InterviewSchedulingTable
 from hiringManagementTool.models.candidatedemandhistory import CandidateDemandHistory
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
@@ -245,3 +247,68 @@ class TimezoneDropdownAPIView(APIView):
 
         serializer = TimezoneSerializer(timezone_choices, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+ 
+class InterviewDetailsAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        filter_serializer = InterviewDetailsFilterSerializer(data=request.data)
+        if filter_serializer.is_valid():
+            interviews_qs = filter_serializer.get_interviews() # Get the base queryset
+
+            # Serialize using the unmodified serializer
+            interview_serializer = InterviewSchedulingSerializer(interviews_qs, many=True)
+            serialized_data = interview_serializer.data
+
+            # --- Data Enrichment Step ---
+            # Extract cdl_ids from the initially serialized data
+            # Assumes 'ist_cdl' is present in the unmodified serializer output
+            cdl_id_map = {item.get('ist_cdl'): item for item in serialized_data if item.get('ist_cdl')}
+            unique_cdl_ids = list(cdl_id_map.keys())
+
+            candidate_data_map = {}
+            demand_id_map = {}
+            if unique_cdl_ids:
+                # Fetch CandidateDemandLink objects, pre-fetching the related objects
+                # using the *actual field names* from your model (cdl_cdm_id, cdl_dem_id)
+                cdl_links = CandidateDemandLink.objects.filter(
+                    cdl_id__in=unique_cdl_ids
+                ).select_related(
+                    'cdl_cdm_id',  # Tells Django to fetch the related CandidateMaster
+                    'cdl_dem_id'   # Tells Django to fetch the related OpenDemand
+                )
+
+                for link in cdl_links:
+                    # --- FIX FOR DEMAND ID ---
+                    # Access the related OpenDemand object via link.cdl_dem_id
+                    # Then get its primary key or the specific ID field (e.g., .dem_id)
+                    related_demand = link.cdl_dem_id # This IS the OpenDemand object
+                    if related_demand:
+                        # Replace 'dem_id' with the actual primary key field name on your OpenDemand model
+                        demand_id_map[link.cdl_id] = related_demand.dem_id
+                    else:
+                        demand_id_map[link.cdl_id] = None
+
+                    # --- FIX FOR CANDIDATE DETAILS ---
+                    # Access the related CandidateMaster object via link.cdl_cdm_id
+                    related_candidate = link.cdl_cdm_id # This IS the CandidateMaster object
+                    if related_candidate:
+                        candidate_data_map[link.cdl_id] = {
+                            # Get attributes from the related_candidate object
+                            "id": related_candidate.cdm_id,
+                            "name": related_candidate.cdm_name,
+                            "email": related_candidate.cdm_email,
+                        }
+                    else:
+                        candidate_data_map[link.cdl_id] = None
+
+            # Modify the serialized data list in place
+            for interview_dict in serialized_data:
+                cdl_id = interview_dict.get('ist_cdl')
+                # Use .get() for safe dictionary access
+                interview_dict['demand_id'] = demand_id_map.get(cdl_id)
+                interview_dict['candidate_details'] = candidate_data_map.get(cdl_id)
+
+            # --- End Data Enrichment Step ---
+
+            return Response(serialized_data, status=status.HTTP_200_OK)
+
+        return Response(filter_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
