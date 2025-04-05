@@ -2,16 +2,23 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from hiringManagementTool.components.departments.serializers import InternalDepartmentSerializer
+from rest_framework import generics
+from hiringManagementTool.components.departments.serializers import InternalDepartmentSerializer, InternalDepartmentMasterSerializer
 from hiringManagementTool.models.departments import InternalDepartmentMaster
 from hiringManagementTool.models.employees import EmployeeMaster
 from hiringManagementTool.models.roles import RoleMaster
 from .serializers import EmployeeMasterSerializer
-# class InternalDepartmentAPIView(APIView):  # ReadOnly API
-#     queryset = InternalDepartmentMaster.objects.select_related(
-#         'idm_deliverymanager_id__emp_lcm_id'  # Optimized query for related fields
-#     ).order_by('idm_id')
-#     serializer_class = InternalDepartmentDetailsSerializer
+
+class InternalDepartmentMasterListAPI(generics.ListAPIView):
+    queryset = InternalDepartmentMaster.objects.all()
+    serializer_class = InternalDepartmentMasterSerializer
+    
+    def get_queryset(self):
+        # You can add any filtering logic here if needed
+        return super().get_queryset().select_related(
+            'idm_spoc_id',
+            'idm_deliverymanager_id'
+        )
 
 class InternalDepartmentAPIView(APIView):
     """Handles GET and POST requests for InternalDepartment"""
