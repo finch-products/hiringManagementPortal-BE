@@ -53,12 +53,25 @@ class StatusSerializer(serializers.Serializer):
     dsm_code = serializers.CharField(source='dem_dsm_id.dsm_code')
     dsm_description = serializers.CharField(source='dem_dsm_id.dsm_description')
 
+class PositionLocationSerializer(serializers.Serializer):
+    lcm_id = serializers.IntegerField()
+    lcm_name = serializers.SerializerMethodField()
+
+    def get_lcm_name(self, obj):
+        try:
+            location = LocationMaster.objects.get(lcm_id=obj)
+            return location.lcm_name
+        except LocationMaster.DoesNotExist:
+            return None
+
 class DemandSerializer(serializers.ModelSerializer):
     client_details = ClientSerializer(source='*')
     location_details = LocationSerializer(source='*')
     lob_details = LOBSerializer(source='*')
     department_details = DepartmentSerializer(source='*')
     status_details = StatusSerializer(source='*')
+    position_locations = serializers.SerializerMethodField()
+    
     class Meta:
         model = OpenDemand
         fields = [
@@ -68,8 +81,31 @@ class DemandSerializer(serializers.ModelSerializer):
             'dem_positions', 'dem_rrnumber', 'dem_jrnumber', 'dem_rrgade', 
             'dem_gcblevel', 'dem_jd', 'dem_comment', 'dem_isreopened', 
             'dem_isactive', 'dem_insertdate', 'dem_updatedate', 'dem_insertby', 
-            'dem_updateby'
+            'dem_updateby', "dem_mandatoryskill", "position_locations"
         ]
+
+    def get_position_locations(self, obj):
+        if not obj.dem_position_location:
+            return []
+        
+        # Get all location IDs from the JSON field
+        location_ids = obj.dem_position_location
+        
+        # Prepare data for serialization
+        locations_data = []
+        for loc_id in location_ids:
+            try:
+                location = LocationMaster.objects.get(lcm_id=loc_id)
+                locations_data.append({
+                    'lcm_id': location.lcm_id,
+                    'lcm_name': location.lcm_name
+                })
+            except LocationMaster.DoesNotExist:
+                continue
+                
+        return locations_data
+
+
 
 class CandidateStatusSerializer(serializers.ModelSerializer):
     class Meta:
