@@ -24,8 +24,8 @@ class DemandHistory(models.Model):
         help_text="Reference to Open demand",
     )
     dhs_dsm_insertdate = models.DateTimeField(help_text="Status insert date (from DemandStatusMaster)")
-    dhs_fromdata = models.TextField(blank=True, null=True, help_text="Old value/data before update")
-    dhs_todata = models.TextField(blank=True, null=True, help_text="New value/data after update")
+    dhs_fromdata = models.JSONField(blank=True, null=True, help_text="Old value/data before update")
+    dhs_todata = models.JSONField(blank=True, null=True, help_text="New value/data after update")
     dhs_log_msg = models.TextField(blank=True, null=True, help_text="Comments regarding status change")
     """dhs_insertby=models.ForeignKey(
         'EmployeeMaster',
