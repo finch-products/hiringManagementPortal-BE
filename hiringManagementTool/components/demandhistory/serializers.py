@@ -7,3 +7,7 @@ class DemandHistorySerializer(serializers.ModelSerializer):
         model = DemandHistory
         fields = '__all__'
 
+
+class DemandHistoryapiSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    date = serializers.DateTimeField()
