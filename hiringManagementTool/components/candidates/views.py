@@ -11,12 +11,12 @@ from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
 from hiringManagementTool.models.employees import EmployeeMaster
 from django.shortcuts import get_object_or_404
 from django.db import transaction  
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class CandidateAPIView(ListCreateAPIView):
     queryset = CandidateMaster.objects.all().order_by('-cdm_insertdate')
-
     serializer_class = CandidateMasterSerializer
-
+    parser_classes = (MultiPartParser, FormParser)
 
 class CandidateDetailAPIView(RetrieveUpdateAPIView):
     queryset = CandidateMaster.objects.all()

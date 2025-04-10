@@ -26,7 +26,7 @@ class CandidateMaster(models.Model):
         help_text="Reference to Location Master Table"
     )
 
-    cdm_profile = models.FileField(upload_to="uploads/candidate_profiles/", blank=True, null=True, help_text="Candidate profile file (resume)")
+    cdm_profile = models.FileField(upload_to="candidate_profiles/", blank=True, null=True, help_text="Candidate profile file (resume)")
     cdm_description = models.TextField(blank=True, null=True, help_text="Cover letter or profile description")
     
     cdm_csm_id = models.ForeignKey(
@@ -60,7 +60,12 @@ class CandidateMaster(models.Model):
         related_name="candidates_updated",
         help_text="User ID (Employee) who last updated this record"
     )
-
+    cdm_image = models.ImageField(
+    upload_to='candidate_images/',
+    blank=True,
+    null=True,
+    help_text="Candidate image"
+    )
     cdm_isinternal = models.BooleanField(default=False, help_text="1 for internal candidate, 0 for external")
     cdm_isactive = models.BooleanField(default=True, help_text="1 for active, 0 for inactive")
     cdm_comment = models.TextField(blank=True, null=True, help_text="Comment Entry")

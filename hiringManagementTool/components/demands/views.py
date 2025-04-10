@@ -13,57 +13,47 @@ from hiringManagementTool.models.locations import LocationMaster
 from .serializers import OpenDemandUpdateSerializer, AllOpenDemandsIdSerializer
 from rest_framework.generics import UpdateAPIView
 from datetime import datetime
+from rest_framework.generics import ListCreateAPIView
 from django.db.models import Count, Q
 from hiringManagementTool.models.clients import ClientMaster
 from hiringManagementTool.models.lobs import LOBMaster
 
-class DemandAPIView(APIView):
+class DemandAPIView(ListCreateAPIView):
     """Handles GET and POST requests for OpenDemand"""
-    
-    def get(self, request):
-        """Retrieve all OpenDemands"""
-        demands = OpenDemand.objects.select_related(
-            'dem_clm_id', 'dem_lcm_id', 'dem_lob_id', 'dem_idm_id', 'dem_dsm_id'
-        ).order_by('-dem_insertdate') 
-        serializer = OpenDemandSerializer(demands, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    queryset = OpenDemand.objects.select_related(
+        'dem_clm_id', 'dem_lcm_id', 'dem_lob_id', 'dem_idm_id', 'dem_dsm_id'
+    ).order_by('-dem_insertdate')
+    serializer_class = OpenDemandSerializer
 
     def post(self, request):
         """Create a new demand and auto-assign status"""
         print("\n📥 Incoming Request Data:", request.data)
-        print("\n📥 dem_jd value:", request.data.get('dem_jd'))  # Log the value of dem_jd
+        print("\n📥 dem_jd value:", request.data.get('dem_jd'))
 
-         # Handle dem_position_location if it's coming as a JSON string
         data = request.data.copy()  # Create a mutable copy
-         # Handle dem_position_location
-        if 'dem_position_location' in data:
-            position_location = data['dem_position_location']
-    
-        if isinstance(position_location, str):
-         try:
-            # Parse the string to Python object
-            if position_location.startswith('[') and position_location.endswith(']'):
-                # It's a JSON string
-                parsed_data = json.loads(position_location)
-            else:
-                # It might be comma-separated values
-                parsed_data = [x.strip() for x in position_location.split(',') if x.strip()]
-            
-            # Convert to list of integers and assign back
-            data['dem_position_location'] = [int(item) for item in parsed_data]
-         except (json.JSONDecodeError, ValueError) as e:
-            print(f"Error parsing: {e}")
-            data['dem_position_location'] = []
 
-        print("\n📥 Final Parsed dem_position_location:", data['dem_position_location'])  # Debug final data
+        # Handle dem_position_location (can be JSON string or comma-separated)
+        raw_location = data.get('dem_position_location')
+        if raw_location:
+            try:
+                if isinstance(raw_location, str):
+                    if raw_location.strip().startswith('[') and raw_location.strip().endswith(']'):
+                        parsed_data = json.loads(raw_location)
+                    else:
+                        parsed_data = [x.strip() for x in raw_location.split(',') if x.strip()]
+                    data['dem_position_location'] = [int(item) for item in parsed_data]
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"Error parsing dem_position_location: {e}")
+                data['dem_position_location'] = []
 
+        print("\n📥 Final Parsed dem_position_location:", data.get('dem_position_location'))
 
-        serializer = OpenDemandSerializer(data=data)
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             print("\n✅ Serializer Validated Data:", serializer.validated_data)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
         print("\n❌ Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
