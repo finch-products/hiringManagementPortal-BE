@@ -6,10 +6,18 @@ from rest_framework.response import Response
 from hiringManagementTool.models.employees import EmployeeMaster
 from hiringManagementTool.components.employees.serializers import EmployeeMasterSerializer, EmployeeRolesSerializer
 from rest_framework.decorators import api_view
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class EmployeeAPIView(ListCreateAPIView):
     queryset = EmployeeMaster.objects.all().order_by('-emp_insertdate')
     serializer_class = EmployeeMasterSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 
 class EmployeeDetailAPIView(RetrieveUpdateAPIView):
     queryset = EmployeeMaster.objects.all()

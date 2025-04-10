@@ -25,6 +25,7 @@ class CandidateMasterSerializer(serializers.ModelSerializer):
     lcm_name =serializers.CharField(source="cdm_location.lcm_name",read_only=True)
     cdm_insertby = serializers.CharField(source='cdm_insertby.emp_id', read_only=True)
     cdm_updateby = serializers.CharField(source='cdm_updateby.emp_id', read_only=True)
+    cdm_image = serializers.ImageField(required=False)
 
     class Meta:
         model = CandidateMaster
@@ -45,7 +46,8 @@ class CandidateMasterSerializer(serializers.ModelSerializer):
             "lcm_name",
             "candidate_status",
             "cdm_insertby",
-            "cdm_updateby"
+            "cdm_updateby",
+            "cdm_image",
         ]
 
 

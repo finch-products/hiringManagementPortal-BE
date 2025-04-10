@@ -3,6 +3,8 @@ from hiringManagementTool.components.roles.serializers import RoleMasterSerializ
 from rest_framework import serializers
 
 class EmployeeMasterSerializer(serializers.ModelSerializer):
+    emp_image = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = EmployeeMaster
         fields = '__all__'
@@ -18,7 +20,15 @@ class EmployeeMasterSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data['rlm_name'] = instance.emp_rlm_id.rlm_name if instance.emp_rlm_id else None
         data['lcm_name'] = instance.emp_lcm_id.lcm_name if instance.emp_lcm_id else None
+
+        # Add full image path
+        request = self.context.get('request')
+        if instance.emp_image and request:
+            data['emp_image'] = request.build_absolute_uri(instance.emp_image.url)
+        else:
+            data['emp_image'] = None
         return data
+    
 
 class EmployeeDetailSerializer(serializers.ModelSerializer):
     """Serializer for Employee details with Location name."""

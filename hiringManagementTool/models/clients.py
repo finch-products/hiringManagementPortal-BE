@@ -46,7 +46,13 @@ class ClientMaster(models.Model):
         related_name="clm_updated_records",
         help_text="Reference to the employee who last updated this record"
     )
-    
+    clm_logo = models.ImageField(
+    upload_to='client_logos/',
+    blank=True,
+    null=True,
+    help_text="Client Logo"
+    )
+
     def _str_(self):
         return f"{self.clm_name} ({self.clm_clientId})"
     

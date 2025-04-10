@@ -85,7 +85,7 @@ class OpenDemand(models.Model):
     dem_rrgade = models.CharField(max_length=100, blank=True, null=True, help_text="RR Grade Entry")
     dem_gcblevel = models.CharField(max_length=100, blank=True, null=True, help_text="GCB Level Entry")
 
-    dem_jd = models.FileField(upload_to="uploads/jd_files/", blank=True, null=True, help_text="Job Description File Upload")
+    dem_jd = models.FileField(upload_to="jd_files/", blank=True, null=True, help_text="Job Description File Upload")
     dem_comment = models.TextField(blank=True, null=True, help_text="Comment Entry")
     
     dem_isreopened = models.BooleanField(blank=True, null=True,default=False, help_text="Indicates if Demand is Reopened (1 = Reopened, 0 = New)")

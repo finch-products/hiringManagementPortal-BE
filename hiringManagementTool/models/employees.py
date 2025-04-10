@@ -32,7 +32,12 @@ class EmployeeMaster(models.Model):
         db_column="emp_rlm_id",
         help_text="Role ID associated with the employee"
     )
-    
+    emp_image = models.ImageField(
+    upload_to='employee_images/',
+    blank=True,
+    null=True,
+    help_text="Employee image"
+    )
     emp_isactive = models.BooleanField(default=True, help_text="Indicates if the employee is active or not")
     emp_keyword = models.TextField(help_text="Keywords to find specific requirements", null=True, blank=True)
     emp_insertdate = models.DateTimeField(auto_now_add=True, help_text="Record creation timestamp")
