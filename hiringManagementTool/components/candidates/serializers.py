@@ -187,6 +187,7 @@ class AllCandidateMasterIdSerializer(serializers.ModelSerializer):
 
 class CandidateSearchSerializer(serializers.Serializer):
     cdm_id = serializers.CharField(required=False)
+    emp_id = serializers.CharField(required=False)
     name = serializers.CharField(required=False)
     email = serializers.CharField(required=False)
     phone = serializers.CharField(required=False)
@@ -201,6 +202,9 @@ class CandidateSearchSerializer(serializers.Serializer):
 
         if search_params.get('cdm_id'):
             query &= Q(cdm_id=search_params['cdm_id'].strip())
+
+        if search_params.get('emp_id'):
+            query &= Q(cdm_emp_id=search_params['emp_id'].strip())
 
         if search_params.get('name'):
             query &= Q(cdm_name__icontains=search_params['name'].strip())

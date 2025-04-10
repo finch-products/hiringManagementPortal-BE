@@ -126,6 +126,7 @@ class CandidateSearchView(APIView):
                 for candidate in candidates:
                     candidates_data.append({
                         "cdm_id": candidate.cdm_id,
+                        "emp_id": candidate.cdm_emp_id,
                         "name": candidate.cdm_name,
                         "email": candidate.cdm_email,
                         "phone": candidate.cdm_phone,
