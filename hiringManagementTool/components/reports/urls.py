@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import AgedemandReportView, OpenDemandCountReportView, TotalPositionsOpenedLastWeekView,DemandByStatusView, DemandFulfillmentMetricsView, LobTargetProgressView, ClientSelectionPercentageView, TimeTakenForProfileSubmissionView, TimeTakenFromInterviewToFeedbackView, ReportView
+from .views import (
+    AgedemandReportView, OpenDemandCountReportView, TotalPositionsOpenedLastWeekView,DemandByStatusView, DemandFulfillmentMetricsView, LobTargetProgressView, 
+    ClientSelectionPercentageView, TimeTakenForProfileSubmissionView, TimeTakenFromInterviewToFeedbackView, ReportView, SkillDemandReportView
+)
 
 urlpatterns = [
     path('age-demand/', AgedemandReportView.as_view(), name='age-demand-report'),
@@ -12,4 +15,5 @@ urlpatterns = [
     path('demand-time-taken-for-profile-submission/', TimeTakenForProfileSubmissionView.as_view(), name='demand-time-taken-for-profile-submission-report'),
     path('TimeTakenFromInterviewToFeedbackView/', TimeTakenFromInterviewToFeedbackView.as_view() , name='time-taken-from-interview-to-feedback-report'),
     path("candidate-selection/", ReportView.as_view(), name="report"),
+    path("skill-demand-report/", SkillDemandReportView.as_view(), name="skill-demand-report"),
 ]

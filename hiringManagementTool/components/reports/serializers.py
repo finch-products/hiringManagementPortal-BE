@@ -43,3 +43,11 @@ class AverageTimeTakenbyClientsSerializer(serializers.Serializer):
 class ReportSerializer(serializers.Serializer):
     year = serializers.IntegerField()
     report = serializers.DictField()
+
+class SkillDemandReportSerializer(serializers.Serializer):
+    skill = serializers.CharField()
+    demand_count = serializers.IntegerField()
+    total_positions = serializers.IntegerField()
+    candidate_count = serializers.IntegerField()
+    total_candidates_with_skill = serializers.IntegerField()
+    gap = serializers.IntegerField()
