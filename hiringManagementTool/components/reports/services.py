@@ -631,3 +631,81 @@ def get_custom_data(start_date, end_date):
             "totalCount": total_count
         })
     return results
+
+
+def get_skill_demand_report():
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            WITH SkillDemand AS (
+                SELECT 
+                    TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(od.dem_skillset, ',', numbers.n), ',', -1)) AS skill,
+                    COUNT(*) AS demand_count,
+                    SUM(od.dem_positions) AS total_positions
+                FROM opendemand od
+                JOIN (
+                    SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4  
+                    UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8  
+                    UNION ALL SELECT 9 UNION ALL SELECT 10
+                ) numbers
+                ON CHAR_LENGTH(od.dem_skillset) - CHAR_LENGTH(REPLACE(od.dem_skillset, ',', '')) >= numbers.n - 1
+                WHERE od.dem_isactive = 1 AND od.dem_skillset IS NOT NULL
+                GROUP BY skill
+                HAVING skill != ''
+            ),
+            SkillSupply AS (
+                SELECT 
+                    TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(cdm.cdm_keywords, ',', numbers.n), ',', -1)) AS skill,
+                    COUNT(DISTINCT cdl.cdl_id) AS candidate_submitted_count
+                FROM candidatedemandlink cdl
+                JOIN candidatemaster cdm ON cdl.cdl_cdm_id = cdm.cdm_id
+                JOIN (
+                    SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4  
+                    UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8  
+                    UNION ALL SELECT 9 UNION ALL SELECT 10
+                ) numbers
+                ON CHAR_LENGTH(cdm.cdm_keywords) - CHAR_LENGTH(REPLACE(cdm.cdm_keywords, ',', '')) >= numbers.n - 1
+                WHERE cdm.cdm_keywords IS NOT NULL AND cdm.cdm_isactive = 1
+                GROUP BY skill
+                HAVING skill != ''
+            ),
+            TotalCandidatesWithSkill AS (
+                SELECT 
+                    TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(cdm_keywords, ',', numbers.n), ',', -1)) AS skill,
+                    COUNT(DISTINCT cdm_id) AS total_candidates
+                FROM candidatemaster
+                JOIN (
+                    SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4  
+                    UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8  
+                    UNION ALL SELECT 9 UNION ALL SELECT 10
+                ) numbers
+                ON CHAR_LENGTH(cdm_keywords) - CHAR_LENGTH(REPLACE(cdm_keywords, ',', '')) >= numbers.n - 1
+                WHERE cdm_keywords IS NOT NULL AND cdm_isactive = 1
+                GROUP BY skill
+                HAVING skill != ''
+            )
+            SELECT 
+                d.skill,
+                d.demand_count,
+                d.total_positions,
+                COALESCE(s.candidate_submitted_count, 0),
+                COALESCE(t.total_candidates, 0),
+                (d.total_positions - COALESCE(s.candidate_submitted_count, 0)) AS gap
+            FROM SkillDemand d
+            LEFT JOIN SkillSupply s ON d.skill = s.skill
+            LEFT JOIN TotalCandidatesWithSkill t ON d.skill = t.skill
+            ORDER BY d.total_positions DESC;
+        """)
+
+        result = cursor.fetchall()
+
+    return [
+        {
+            "skill": row[0],
+            "demand_count": row[1],
+            "total_positions": row[2],
+            "candidate_count": row[3],
+            "total_candidates_with_skill": row[4],
+            "gap": row[5]
+        }
+        for row in result
+    ]
