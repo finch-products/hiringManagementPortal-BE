@@ -11,6 +11,7 @@ class ClientSerializer(serializers.Serializer):
     clm_id = serializers.IntegerField(source='dem_clm_id.clm_id')
     clm_name = serializers.CharField(source='dem_clm_id.clm_name')
     clm_managername = serializers.CharField(source='dem_clm_id.clm_managername')
+    clm_logo = serializers.ImageField(source='dem_clm_id.clm_logo')
 
 class LocationSerializer(serializers.Serializer):
     lcm_id = serializers.IntegerField(source='dem_lcm_id.lcm_id',allow_null=True, default=None)
@@ -71,7 +72,6 @@ class DemandSerializer(serializers.ModelSerializer):
     department_details = DepartmentSerializer(source='*')
     status_details = StatusSerializer(source='*')
     position_locations = serializers.SerializerMethodField()
-    
     class Meta:
         model = OpenDemand
         fields = [
@@ -81,7 +81,7 @@ class DemandSerializer(serializers.ModelSerializer):
             'dem_positions', 'dem_rrnumber', 'dem_jrnumber', 'dem_rrgade', 
             'dem_gcblevel', 'dem_jd', 'dem_comment', 'dem_isreopened', 
             'dem_isactive', 'dem_insertdate', 'dem_updatedate', 'dem_insertby', 
-            'dem_updateby', "dem_mandatoryskill", "position_locations"
+            'dem_updateby', 'dem_mandatoryskill', 'position_locations', 'dem_jd'
         ]
 
     def get_position_locations(self, obj):
@@ -121,13 +121,14 @@ class CandidateSerializer(serializers.ModelSerializer):
     location_name = serializers.SerializerMethodField()
     description = serializers.CharField(source='cdl_cdm_id.cdm_description')
     keywords = serializers.CharField(source='cdl_cdm_id.cdm_keywords')
-
+    cdm_profile = serializers.FileField(source='cdl_cdm_id.cdm_profile')
+    cdm_image = serializers.ImageField(source='cdl_cdm_id.cdm_image')
     class Meta:
         model = CandidateDemandLink
         fields = [
             'cdl_id', 'cdl_cdm_id', 'name', 'email', 'phone', 
             'location_id', 'location_name', 'description', 
-            'keywords', 'cdl_joiningdate', 'cdl_insertdate', 'candidate_status'
+            'keywords', 'cdl_joiningdate', 'cdl_insertdate', 'candidate_status', 'cdm_profile', 'cdm_image'
         ]
 
     def get_location_id(self, obj):
@@ -151,13 +152,14 @@ class CandidateMasterSerializer(serializers.ModelSerializer):
     candidate_status = serializers.SerializerMethodField()
     location_id = serializers.SerializerMethodField()
     location_name = serializers.SerializerMethodField()
-
+    cdm_profile = serializers.FileField()
+    cdm_image = serializers.ImageField()
     class Meta:
         model = CandidateMaster
         fields = [
             'cdl_id', 'cdl_cdm_id', 'cdm_name', 'cdm_email', 'cdm_phone', 
             'location_id', 'location_name', 'cdm_description', 
-            'cdm_keywords', 'cdl_joiningdate', 'cdl_insertdate', 'candidate_status'
+            'cdm_keywords', 'cdl_joiningdate', 'cdl_insertdate', 'candidate_status', 'cdm_profile', 'cdm_image'
         ]
 
     def get_cdl_id(self, obj):
