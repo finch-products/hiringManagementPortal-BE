@@ -18,36 +18,39 @@ def get_demand_status_ids(status_list):
 def get_age_demand_data():
     with connection.cursor() as cursor:
         cursor.execute("""         
-            SELECT
-                CASE
-                    WHEN TIMESTAMPDIFF(DAY, d.dem_ctooldate, 
-                        COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)
-                    ) < 20 THEN '<20'
-                    WHEN TIMESTAMPDIFF(DAY, d.dem_ctooldate, 
-                        COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)
-                    ) BETWEEN 20 AND 29 THEN '20-29'
-                    WHEN TIMESTAMPDIFF(DAY, d.dem_ctooldate, 
-                        COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)
-                    ) BETWEEN 30 AND 39 THEN '30-39'
-                    WHEN TIMESTAMPDIFF(DAY, d.dem_ctooldate, 
-                        COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)
-                    ) BETWEEN 40 AND 49 THEN '40-49'
-                    WHEN TIMESTAMPDIFF(DAY, d.dem_ctooldate, 
-                        COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)
-                    ) BETWEEN 50 AND 59 THEN '50-59'
-                    ELSE '60+'
-                END AS age,
-                SUM(COALESCE(dc.candidate_count, 0)) AS candidate_count
-            FROM opendemand d
-            LEFT JOIN demandhistory dh 
-                ON d.dem_id = dh.dhs_dem_id AND dh.dhs_todata LIKE '%Closed%'
-            LEFT JOIN (
-                SELECT cdl_dem_id, COUNT(*) AS candidate_count
-                FROM candidatedemandlink
-                GROUP BY cdl_dem_id
-            ) dc ON d.dem_id = dc.cdl_dem_id
-            GROUP BY age
-            ORDER BY age;
+            WITH age_ranges AS (
+                SELECT '<20' AS age_bucket UNION ALL
+                SELECT '20-29' UNION ALL
+                SELECT '30-39' UNION ALL
+                SELECT '40-49' UNION ALL
+                SELECT '50-59' UNION ALL
+                SELECT '60+'
+            ),
+            demand_ages AS (
+                SELECT 
+                    CASE
+                        WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) < 20 THEN '<20'
+                        WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) BETWEEN 20 AND 29 THEN '20-29'
+                        WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) BETWEEN 30 AND 39 THEN '30-39'
+                        WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) BETWEEN 40 AND 49 THEN '40-49'
+                        WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) BETWEEN 50 AND 59 THEN '50-59'
+                        ELSE '60+'
+                    END AS age_bucket
+                FROM opendemand d
+                LEFT JOIN (
+                    SELECT dhs_dem_id, MIN(dhs_dsm_insertdate) AS dhs_dsm_insertdate
+                    FROM demandhistory
+                    WHERE dhs_todata LIKE '%Closed%'
+                    GROUP BY dhs_dem_id
+                ) dh ON d.dem_id = dh.dhs_dem_id
+                WHERE COALESCE(d.dem_ctooldate, d.dem_insertdate) IS NOT NULL 
+                AND COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill) IS NOT NULL
+            )
+            SELECT a.age_bucket, COALESCE(COUNT(d.age_bucket), 0) AS demand_count
+            FROM age_ranges a
+            LEFT JOIN demand_ages d ON a.age_bucket = d.age_bucket
+            GROUP BY a.age_bucket
+            ORDER BY FIELD(a.age_bucket, '<20', '20-29', '30-39', '40-49', '50-59', '60+');
         """)
         rows = cursor.fetchall()
 
