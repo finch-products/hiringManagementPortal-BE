@@ -3,6 +3,7 @@ from hiringManagementTool.models.locations import LocationMaster
 from hiringManagementTool.models.roles import RoleMaster
 from datetime import datetime
 from django.db.models import Max
+import re
 
 class EmployeeMaster(models.Model):
     emp_id = models.CharField(
@@ -46,26 +47,25 @@ class EmployeeMaster(models.Model):
     emp_updateby = models.CharField(null=True,  max_length=50, blank=True, help_text="User ID who updated the record")
 
     def save(self, *args, **kwargs):
-     if not self.emp_id:
-        today = datetime.today().strftime('%d%m%Y')
-        
-        # Get the max numeric suffix from emp_id
-        latest_entry = EmployeeMaster.objects.filter(emp_id__startswith=f"emp_{today}_").aggregate(
-            max_id=Max("emp_id")
-        )
+        if not self.emp_id:
+            all_ids = EmployeeMaster.objects.values_list('emp_id', flat=True)
 
-        if latest_entry["max_id"]:
-            try:
-                last_number = int(latest_entry["max_id"].rsplit("_", 1)[-1])  # Extract last numeric part
-                new_number = last_number + 1
-            except ValueError:
-                new_number = 1  # Handle edge cases where ID format is incorrect
-        else:
-            new_number = 1  # Start from 1
+            max_number = 0
+            for eid in all_ids:
+                try:
+                    if eid.startswith("emp_"):
+                        num = int(eid.split("_")[1])
+                        if num > max_number:
+                            max_number = num
+                except (IndexError, ValueError):
+                    continue  # skip malformed ids
 
-        self.emp_id = f"emp_{today}_{new_number}"  # No zero-padding, ensures numeric sorting
+            new_number = max_number + 1
+            self.emp_id = f"emp_{new_number}"
 
-     super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
+
+
     def __str__(self):
         return self.emp_name
     
