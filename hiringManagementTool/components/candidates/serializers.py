@@ -242,5 +242,5 @@ class CandidateSearchSerializer(serializers.Serializer):
             if candidate_status:
                 query &= Q(cdm_csm_id=candidate_status.csm_id)
 
-        candidates = CandidateMaster.objects.filter(query, cdm_isactive=1).select_related('cdm_location', 'cdm_csm_id')
+        candidates = CandidateMaster.objects.filter(query).select_related('cdm_location', 'cdm_csm_id')#(query,cdm_isactive=1)
         return candidates
