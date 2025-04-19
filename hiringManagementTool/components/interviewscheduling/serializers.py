@@ -2,70 +2,57 @@ from rest_framework import serializers
 from hiringManagementTool.models.interview import InterviewSchedulingTable
 from hiringManagementTool.constants import InterviewStatus, InterviewType
 from hiringManagementTool.models.candidatedemand import CandidateDemandLink
-from hiringManagementTool.models.candidates import CandidateMaster
-import datetime
-import json 
-from hiringManagementTool.models.candidatedemandhistory import CandidateDemandHistory
 from django.utils import timezone
 
 class InterviewSchedulingSerializer(serializers.ModelSerializer):
     ist_interviewstatus_display = serializers.SerializerMethodField()
     ist_interviewtype_display = serializers.SerializerMethodField()
-    ist_timezone_display = serializers.SerializerMethodField() # Added timezone display method (optional but good practice)
+    ist_timezone_display = serializers.SerializerMethodField() 
 
     class Meta:
         model = InterviewSchedulingTable
-        fields = '__all__' # Includes all fields from the model
+        fields = '__all__' 
 
     def get_ist_interviewstatus_display(self, obj):
         try:
-            # Ensure obj.ist_interviewstatus is not None before creating Enum
             if obj.ist_interviewstatus is not None:
                  return InterviewStatus(obj.ist_interviewstatus).name
-            return "Not Set" # Or None, or ""
+            return "Not Set"
         except ValueError:
-            return "Unknown Status" # Or f"Invalid Status Value: {obj.ist_interviewstatus}"
+            return "Unknown Status" 
 
     def get_ist_interviewtype_display(self, obj):
         try:
-            # Ensure obj.ist_interviewtype is not None before creating Enum
             if obj.ist_interviewtype is not None:
                 return InterviewType(obj.ist_interviewtype).name
-            return "Not Set" # Or None, or ""
+            return "Not Set" 
         except ValueError:
-            return "Unknown Type" # Or f"Invalid Type Value: {obj.ist_interviewtype}"
+            return "Unknown Type"
 
     def get_ist_timezone_display(self, obj):
-        # Assuming ist_timezone is stored directly as a string
         return obj.ist_timezone
     
     def to_representation(self, instance):
-        """
-        Override to_representation method to handle `next` filter.
-        """
         representation = super().to_representation(instance)
         representation['ist_interviewdate'] = instance.ist_interviewdate.isoformat()
         return representation
 
 
-# --- Updated InterviewSchedulingUpdateSerializer ---
 class InterviewSchedulingUpdateSerializer(serializers.ModelSerializer):
-    # Required field to identify the interview
-    ist_id = serializers.IntegerField(required=True, write_only=True) # write_only=True if you don't want it in response schema hints
-
-    # Optional fields for update
+    ist_id = serializers.IntegerField(required=True, write_only=True)
     ist_interviewdate = serializers.DateField(required=False)
-    ist_interview_start_time = serializers.TimeField(required=False) # Renamed from ist_interviewtime
-    ist_interview_end_time = serializers.TimeField(required=False)   # Added end time
+    ist_interview_start_time = serializers.TimeField(required=False)
+    ist_interview_end_time = serializers.TimeField(required=False)
     ist_timezone = serializers.CharField(max_length=50, required=False)
     ist_interviewtype = serializers.ChoiceField(
-        choices=[(type.name, type.name) for type in InterviewType], # Accept name input
-        required=False
+    choices=[(type.value, type.name) for type in InterviewType],
+    required=False
     )
     ist_interviewstatus = serializers.ChoiceField(
-        choices=[(status.name, status.name) for status in InterviewStatus], # Accept name input
-        required=False
+    choices=[(status.value, status.name) for status in InterviewStatus],
+    required=False
     )
+
     ist_interviewround = serializers.IntegerField(required=False)
     ist_interviewers = serializers.JSONField(required=False) # For the JSON field
     ist_remarks = serializers.CharField(required=False, allow_blank=True, allow_null=True)
@@ -86,29 +73,17 @@ class InterviewSchedulingUpdateSerializer(serializers.ModelSerializer):
             'ist_interviewers',
             'ist_remarks',
             'ist_meeting_details',
-            # 'ist_updatedate' is handled automatically or in the view
         ]
-        # read_only_fields = ['ist_updatedate'] # ist_updatedate is usually handled by auto_now=True or manually in the view
-
+    
     def validate_ist_id(self, value):
-        """Check if the interview instance exists."""
         if not InterviewSchedulingTable.objects.filter(ist_id=value).exists():
             raise serializers.ValidationError(f"InterviewScheduling with ist_id {value} does not exist.")
         return value
 
     def validate(self, data):
-        """
-        Optional: Add cross-field validation, e.g., end_time after start_time.
-        Requires accessing potentially non-updated instance values if not all fields are provided.
-        It's often easier to do this validation in the view where you have the instance.
-        """
-        # Example: Check if start_time and end_time are provided together and valid
         start_time = data.get('ist_interview_start_time')
         end_time = data.get('ist_interview_end_time')
 
-        # If only one is provided, we might need the existing value from the instance
-        # which isn't directly available here without context.
-        # If both are provided:
         if start_time and end_time and start_time >= end_time:
              raise serializers.ValidationError("Interview end time must be after start time.")
 
@@ -143,10 +118,7 @@ class InterviewDetailsFilterSerializer(serializers.Serializer):
         candidate_id = self.validated_data.get("candidate_id", None)
         demand_id = self.validated_data.get("demand_id", None)
         cdl_id = self.validated_data.get("cdl_id", None)
-
         now = timezone.now()
-
-        # Get base queryset
         interviews = InterviewSchedulingTable.objects.all()
 
         if filter_type == "current":
@@ -154,7 +126,6 @@ class InterviewDetailsFilterSerializer(serializers.Serializer):
         elif filter_type in ["next_one", "next_all"]:
             interviews = interviews.filter(ist_interviewdate__gt=now.date()).order_by('ist_interviewdate', 'ist_interview_start_time')
 
-        # Apply additional filters on QuerySet
         if candidate_id:
             interviews = interviews.filter(
                 ist_cdl_id__in=CandidateDemandLink.objects.filter(cdl_cdm_id=candidate_id).values_list('cdl_id', flat=True)
@@ -168,8 +139,7 @@ class InterviewDetailsFilterSerializer(serializers.Serializer):
         if cdl_id:
             interviews = interviews.filter(ist_cdl_id=cdl_id)
 
-        # Only slice after all filters have been applied
         if filter_type == "next_one":
             interviews = interviews[:1]
 
-        return list(interviews)  # Convert to list only at the end
+        return list(interviews)
