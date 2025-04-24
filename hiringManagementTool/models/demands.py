@@ -107,7 +107,7 @@ class OpenDemand(models.Model):
         related_name="demands_updated",
         help_text="User ID (Employee) who last updated this record"
     )
-    dem_position_location = models.JSONField(default=list, blank=True)  # New field for multiple locations
+    dem_position_location = models.JSONField(default=list, blank=True,null=True)  # New field for multiple locations
     dem_mandatoryskill = models.TextField(blank=True, null=True,help_text="Multiple mandatory skillsets separated by commas")
 
     def save(self, *args, **kwargs):
