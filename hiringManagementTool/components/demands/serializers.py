@@ -67,6 +67,18 @@ class OpenDemandSerializer(serializers.ModelSerializer):
     dem_dsm_id = serializers.PrimaryKeyRelatedField(queryset=DemandStatusMaster.objects.only("dsm_id"), write_only=True, required=False)
     dem_position_location = serializers.JSONField(required=False, default=list)
 
+    def validate(self, data):
+        """Custom validation to handle empty values properly"""
+         # Handle dem_jd: set to None if empty string, blank, or not present
+        if 'dem_jd' in data and data['dem_jd'] in ['', None]:
+             data['dem_jd'] = None
+            
+        # Handle empty list for dem_position_location
+        if 'dem_position_location' in data and data['dem_position_location'] == []:
+            data['dem_position_location'] = None
+            
+        return data
+    
     def to_representation(self, instance):
         """Custom representation to fetch location names from LocationMaster based on IDs"""
         data = super().to_representation(instance)
@@ -78,7 +90,7 @@ class OpenDemandSerializer(serializers.ModelSerializer):
             locations = LocationMaster.objects.filter(lcm_id__in=location_ids).values("lcm_id", "lcm_name")
             data["dem_location_position"] = list(locations)  # Format it as required
         else:
-            data["dem_location_position"] = []
+            data["dem_location_position"] = None
 
         return data
     
@@ -136,11 +148,16 @@ class OpenDemandUpdateSerializer(serializers.ModelSerializer):
         """Update only the provided fields while keeping others unchanged"""
         validated_data.pop('dem_id', None)  # ✅ Remove `dem_id` from update
         
-        for attr, value in validated_data.items():
-            if value is not None:  # ✅ Only update explicitly provided fields
-                setattr(instance, attr, value)
+        # Track which fields to update
+        fields_to_update = []
 
+        for attr, value in validated_data.items():
+            if value not in [None, "",' ',[],'']:  # ✅ Only update explicitly provided fields
+                setattr(instance, attr, value)
+                fields_to_update.append(attr)
+                
         instance.dem_updatedate = datetime.now()  # ✅ Always update timestamp
+        fields_to_update.append('dem_updatedate')
         instance.save(update_fields=validated_data.keys())  # ✅ Save only changed fields
 
         return instance  # ✅ Return updated object with full data

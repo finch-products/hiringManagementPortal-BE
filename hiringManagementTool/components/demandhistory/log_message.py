@@ -1,6 +1,6 @@
 import json
 from hiringManagementTool.constants import InterviewStatus, InterviewType
-
+from hiringManagementTool.models.employees import EmployeeMaster
 # 1. Demand Field Labels
 FIELD_LABELS = {
     "dem_ctoolnumber": "Tool Number",
@@ -23,12 +23,13 @@ FIELD_LABELS = {
     "dem_jd": "Job Description",
     "dem_comment": "Comments",
     "dem_isreopened": "Reopened",
+    "dem_position_location": "Position Location",
+    "dem_mandatoryskill": "Mandatory Skills",
+    # Fields below are handled but not displayed in the history anymore:
     "dem_insertdate": "Insert Date",
     "dem_insertby_id": "Inserted By",
     "dem_updatedate": "Update Date",
     "dem_updateby_id": "Updated By",
-    "dem_position_location": "Position Location",
-    "dem_mandatoryskill": "Mandatory Skills",
 }
 
 # 2. Interview Labels
@@ -46,7 +47,7 @@ INTERVIEW_LABELS = {
 }
 
 # 3. Static Templates
-STATIC_MESSAGES ={
+STATIC_MESSAGES = {
     "demand_created": "Demand created",
     "jd_attached": lambda jd: f"JD attached: {jd}",
     "jd_updated": lambda jd: f"JD updated to: {jd}",
@@ -54,14 +55,13 @@ STATIC_MESSAGES ={
     "candidate_linked": lambda name: f"Candidate linked: {name}",
     "status_changed": lambda name, from_s, to_s: f"Status changed for {name} from '{from_s}' to '{to_s}'",
     "interview_scheduled": lambda name, date, round, itype, status, tz, link: (
-        f"Interview scheduled for candidate {name} on {date} (Round {round}, Type: {itype}, Status: {status}, "
-        f"Timezone: {tz}, Meeting: {link})"
+        f"Interview scheduled for candidate {name} on {date} "
+        f"(Round {round}, Type: {itype}, Status: {status}, Timezone: {tz}, Meeting: {link})"
     ),
     "interview_field_updated": lambda label, name, from_val, to_val: (
         f"Field '{label}' updated for {name} from '{from_val}' to '{to_val}'"
     )
 }
-
 
 # 4. Enum Display Utility
 def get_enum_name(enum_class, value):
