@@ -80,10 +80,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'internalhiringtool',
+        'NAME': 'hiring',
         'USER': 'root',
-        'PASSWORD': 'Finch@25',
-        'HOST': '64.227.145.117',  # Changpe to MySQL server IP if remote
+        'PASSWORD': 'rootrootroot123',
+        'HOST': '127.0.0.1',  # Changpe to MySQL server IP if remote
         'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
