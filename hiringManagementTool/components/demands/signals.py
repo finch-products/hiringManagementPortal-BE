@@ -1,10 +1,11 @@
-import traceback
+import traceback 
 import unicodedata
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.timezone import now
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.demandhistory import DemandHistory
+from hiringManagementTool.models.employees import EmployeeMaster
 
 @receiver(post_save, sender=OpenDemand)
 def track_status_change(sender, instance, created, **kwargs):
@@ -43,6 +44,12 @@ def track_status_change(sender, instance, created, **kwargs):
         }
 
         def get_display_value(field, value):
+            if field in ['dem_insertby_id', 'dem_updateby_id'] and value:
+                try:
+                    employee = EmployeeMaster.objects.get(emp_id=value.emp_id if hasattr(value, 'emp_id') else value)
+                    return employee.emp_name
+                except EmployeeMaster.DoesNotExist:
+                    return str(value)
             if field in foreign_key_display_map and value:
                 return getattr(value, foreign_key_display_map[field], str(value))
             return str(value) if value is not None else None
