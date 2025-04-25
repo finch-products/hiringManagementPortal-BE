@@ -2,6 +2,7 @@ from django.db import connection
 import calendar
 from django.http import JsonResponse
 from hiringManagementTool.constants import DEMAND_STATUS, CANDIDATE_STATUS
+from hiringManagementTool.models.candidatestatus import CandidateStatusMaster
 
 def get_demand_status_ids(status_list):
     """Fetch the demand status IDs dynamically based on status names."""
@@ -128,64 +129,57 @@ def get_total_positions_opened_last_week():
 
 
 def get_demand_fulfillment_metrics():
-    with connection.cursor() as cursor:
-        cursor.execute("""
+    def get_ids(codes):
+        return ",".join(map(str, CandidateStatusMaster.objects.filter(csm_code__in=codes).values_list('csm_id', flat=True)))
+
+    submitted_id = CandidateStatusMaster.objects.get(csm_code=CANDIDATE_STATUS["SENT_TO_CLIENT"]).csm_id
+    interview_ids = get_ids([CANDIDATE_STATUS["INTERVIEW_SCHEDULED"], CANDIDATE_STATUS["L1_SCHEDULED"]])
+    not_submitted_ids = get_ids([
+        CANDIDATE_STATUS["APPLIED"], CANDIDATE_STATUS["SCREENING"],
+        CANDIDATE_STATUS["SHORTLISTED"], CANDIDATE_STATUS["INTERVIEW_SCHEDULED"],
+        CANDIDATE_STATUS["L1_SCHEDULED"]
+    ])
+
+    query = f"""
         WITH demand_counts AS (
-            SELECT 
-                COALESCE(SUM(dem_positions), 0) AS total_open_positions
+            SELECT COALESCE(SUM(dem_positions), 0) AS total_open_positions
             FROM opendemand
-            WHERE dem_dsm_id IN (
-                SELECT dsm_id FROM demandstatusmaster 
-                WHERE dsm_isclosed = 0
-            ) AND dem_isactive = 1
+            WHERE dem_dsm_id IN (SELECT dsm_id FROM demandstatusmaster WHERE dsm_isclosed = 0)
+              AND dem_isactive = 1
         ),
         candidate_counts AS (
             SELECT 
-                SUM(CASE WHEN cdm_csm_id IN (
-                    SELECT csm_id FROM candidatestatusmaster WHERE csm_code = %s
-                ) THEN 1 ELSE 0 END) AS profiles_submitted,
-                
-                SUM(CASE WHEN cdm_csm_id IN (
-                    SELECT csm_id FROM candidatestatusmaster WHERE csm_code IN (%s, %s)
-                ) THEN 1 ELSE 0 END) AS interviews_scheduled,
-                
-                SUM(CASE WHEN cdm_csm_id IN (
-                    SELECT csm_id FROM candidatestatusmaster WHERE csm_code IN (%s, %s, %s, %s, %s)
-                ) THEN 1 ELSE 0 END) AS profiles_not_submitted
+                COUNT(CASE WHEN cdm_csm_id = {submitted_id} THEN 1 END) AS profiles_submitted,
+                COUNT(CASE WHEN cdm_csm_id IN ({interview_ids}) THEN 1 END) AS interviews_scheduled,
+                COUNT(CASE WHEN cdm_csm_id IN ({not_submitted_ids}) THEN 1 END) AS profiles_not_submitted
             FROM candidatemaster
             WHERE cdm_isactive = 1
         ),
         total_counts AS (
             SELECT 
-                demand_counts.total_open_positions,
-                candidate_counts.profiles_submitted,
-                candidate_counts.interviews_scheduled,
-                candidate_counts.profiles_not_submitted,
-                (demand_counts.total_open_positions + 
-                 candidate_counts.profiles_submitted + 
-                 candidate_counts.interviews_scheduled + 
-                 candidate_counts.profiles_not_submitted) AS total_records
-            FROM demand_counts, candidate_counts
+                d.total_open_positions,
+                c.profiles_submitted,
+                c.interviews_scheduled,
+                c.profiles_not_submitted,
+                (d.total_open_positions + c.profiles_submitted + c.interviews_scheduled + c.profiles_not_submitted) AS total_records
+            FROM demand_counts d, candidate_counts c
         )
         SELECT 
-            CAST((total_open_positions * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5, 2)) AS open_positions,
-            CAST((profiles_submitted * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5, 2)) AS profiles_submitted,
-            CAST((interviews_scheduled * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5, 2)) AS interview_scheduled,
-            CAST((profiles_not_submitted * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5, 2)) AS profiles_not_submitted
+            CAST((total_open_positions * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5,2)) AS open_positions_percent,
+            CAST((profiles_submitted * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5,2)) AS profiles_submitted_percent,
+            CAST((interviews_scheduled * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5,2)) AS interview_scheduled_percent,
+            CAST((profiles_not_submitted * 100.0 / NULLIF(total_records, 0)) AS DECIMAL(5,2)) AS profiles_not_submitted_percent
         FROM total_counts;
-        """, [
-            CANDIDATE_STATUS["SENT_TO_CLIENT"],  # Profiles Submitted
-            CANDIDATE_STATUS["CLIENT_INTERVIEW_SCHEDULED"], CANDIDATE_STATUS["L1_SCHEDULED"],  # Interviews Scheduled
-            CANDIDATE_STATUS["APPLIED"], CANDIDATE_STATUS["SCREENING"], CANDIDATE_STATUS["SHORTLISTED"], 
-            CANDIDATE_STATUS["INTERVIEW_SCHEDULED"], CANDIDATE_STATUS["L1_SCHEDULED"]  # Profiles Not Submitted
-        ])  
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
         row = cursor.fetchone()
-    return {
-        'open_positions': f"{row[0]:.2f}" if row[0] is not None else "0.00",
-        'profiles_submitted': f"{row[1]:.2f}" if row[1] is not None else "0.00",
-        'interview_scheduled': f"{row[2]:.2f}" if row[2] is not None else "0.00",
-        'profiles_not_submitted': f"{row[3]:.2f}" if row[3] is not None else "0.00"
-    }
+
+    return dict(zip(
+        ['open_positions', 'profiles_submitted', 'interview_scheduled', 'profiles_not_submitted'],
+        [f"{v:.2f}" if v is not None else "0.00" for v in row]
+    ))
 
 
 def get_lob_target_progress(): 
