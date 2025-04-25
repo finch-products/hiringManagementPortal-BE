@@ -51,6 +51,7 @@ class DepartmentSerializer(serializers.Serializer):
 class StatusSerializer(serializers.Serializer):
     dsm_id = serializers.IntegerField(source='dem_dsm_id.dsm_id')
     dsm_code = serializers.CharField(source='dem_dsm_id.dsm_code')
+    dsm_inactive = serializers.CharField(source='dem_dsm_id.dsm_inactive')
     dsm_description = serializers.CharField(source='dem_dsm_id.dsm_description')
 
 class PositionLocationSerializer(serializers.Serializer):

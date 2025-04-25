@@ -20,7 +20,7 @@ def get_age_demand_data():
     with connection.cursor() as cursor:
         cursor.execute("""         
             WITH age_ranges AS (
-                SELECT '<20' AS age_bucket UNION ALL
+                SELECT '0-19' AS age_bucket UNION ALL
                 SELECT '20-29' UNION ALL
                 SELECT '30-39' UNION ALL
                 SELECT '40-49' UNION ALL
@@ -30,7 +30,7 @@ def get_age_demand_data():
             demand_ages AS (
                 SELECT 
                     CASE
-                        WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) < 20 THEN '<20'
+                        WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) <20  THEN '0-19'
                         WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) BETWEEN 20 AND 29 THEN '20-29'
                         WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) BETWEEN 30 AND 39 THEN '30-39'
                         WHEN TIMESTAMPDIFF(DAY, COALESCE(d.dem_ctooldate, d.dem_insertdate), COALESCE(dh.dhs_dsm_insertdate, d.dem_validtill)) BETWEEN 40 AND 49 THEN '40-49'
@@ -51,7 +51,7 @@ def get_age_demand_data():
             FROM age_ranges a
             LEFT JOIN demand_ages d ON a.age_bucket = d.age_bucket
             GROUP BY a.age_bucket
-            ORDER BY FIELD(a.age_bucket, '<20', '20-29', '30-39', '40-49', '50-59', '60+');
+            ORDER BY FIELD(a.age_bucket, '0-19', '20-29', '30-39', '40-49', '50-59', '60+');
         """)
         rows = cursor.fetchall()
 
