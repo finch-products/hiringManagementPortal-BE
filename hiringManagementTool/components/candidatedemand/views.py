@@ -66,6 +66,16 @@ class CandidateDemandLinkAPIView(APIView):
         if len(data) > 5:
             return Response({"error": "A demand can have up to 5 candidates"}, status=status.HTTP_400_BAD_REQUEST)
 
+         # Check if demand linking is allowed
+        if data and 'cdl_dem_id' in data[0]:  # Assuming each candidate data has a 'demand' field
+            demand_id = data[0]['cdl_dem_id']
+            try:
+                demand = OpenDemand.objects.select_related('dem_dsm_id').get(id=demand_id)
+                if demand.dem_dsm_id == 4 and demand.dem_dsm_id.dsm_inactive == 1:
+                    return Response({"error": "Cannot link candidates to an inactive demand"}, status=status.HTTP_400_BAD_REQUEST)
+            except OpenDemand.DoesNotExist:
+                return Response({"error": "Demand not found"}, status=status.HTTP_404_NOT_FOUND)
+            
         serializer = CandidateDemandLinkSerializer(data=data, many=True)
         
         if serializer.is_valid():
