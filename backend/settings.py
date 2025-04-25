@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'internalhiringtool2',
+        'NAME': 'internalhiringtool',
         'USER': 'root',
         'PASSWORD': 'root',
         'HOST': 'localhost',
