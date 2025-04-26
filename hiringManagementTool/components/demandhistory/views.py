@@ -1,6 +1,5 @@
 # views.py for demand-history
 from rest_framework import generics
-
 from hiringManagementTool.models.demandhistory import DemandHistory
 from hiringManagementTool.models.demands import OpenDemand
 from hiringManagementTool.models.candidates import CandidateMaster
@@ -21,92 +20,83 @@ class DemandHistoryDetailAPIView(generics.ListAPIView):
         dem_id = self.kwargs['id']  # Get dem_id from URL
         return DemandHistory.objects.filter(dhs_dem_id=dem_id).order_by('dhs_dsm_insertdate')
 
+
+from hiringManagementTool.components.demandhistory.log_message import (
+    FIELD_LABELS, INTERVIEW_LABELS, STATIC_MESSAGES, get_enum_name
+)
 class DemandHistoryTrackingAPIView(APIView):
     def get(self, request, demand_id):
-        from hiringManagementTool.components.demandhistory.log_message import (
-            FIELD_LABELS, INTERVIEW_LABELS, STATIC_MESSAGES, get_enum_name
-        )
-
         history_entries = []
-        last_updated_by_name = None  # Keep track of last known updater
+        last_known_updater = None  # Keep track of the updater across logs
 
-        demand_logs = list(DemandHistory.objects.filter(dhs_dem_id=demand_id).order_by('dhs_dsm_insertdate'))
+        try:
+            demand_logs = list(DemandHistory.objects.filter(dhs_dem_id=demand_id).order_by('dhs_dsm_insertdate'))
+        except DemandHistory.DoesNotExist:
+            return Response({"error": "Demand not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": "Error fetching demand history"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        for idx, log in enumerate(demand_logs):
-            log_msg = log.dhs_log_msg.lower()
+        for log in demand_logs:
+            log_msg_lower = log.dhs_log_msg.lower() if log.dhs_log_msg else ""
             from_data = log.dhs_fromdata or {}
             to_data = log.dhs_todata or {}
 
-            updated_by_name = None
-            if isinstance(to_data.get("value"), list):
-                for field in to_data["value"]:
-                    if field.get("label") == "dem_updateby_id":
-                        updated_by_name = field.get("value")
-                        break
+            current_updater = None
+            to_value_list = to_data.get("value", [])
+            to_data_map = {item.get("label"): item.get("value") for item in to_value_list if isinstance(item, dict) and "label" in item}
 
-            if not updated_by_name:
-                updated_by_name = last_updated_by_name
+            current_updater = to_data_map.get("dem_updateby_id", None)
+            if not current_updater:
+                current_updater = last_known_updater
             else:
-                last_updated_by_name = updated_by_name
+                last_known_updater = current_updater
 
-            if "demand created" in log_msg:
+            if "demand created" in log_msg_lower:
+                creator = to_data_map.get("dem_insertby_id", current_updater)
                 history_entries.append({
                     "Message": STATIC_MESSAGES["demand_created"],
                     "Date": log.dhs_dsm_insertdate,
-                    "Updated by": updated_by_name
+                    "Updated by": creator
                 })
+                last_known_updater = creator
                 continue
 
-            jd_from = from_data.get("jd")
-            jd_to = to_data.get("jd")
-            if jd_from != jd_to:
-                msg = STATIC_MESSAGES["jd_attached"](jd_to) if not jd_from else STATIC_MESSAGES["jd_updated"](jd_to)
-                history_entries.append({
-                    "Message": msg,
-                    "Date": log.dhs_dsm_insertdate,
-                    "Updated by": updated_by_name
-                })
+            from_value_list = from_data.get("value", [])
+            if not isinstance(from_value_list, list):
                 continue
 
-            if "value" in to_data and isinstance(to_data["value"], list):
-                to_list = to_data["value"]
-                from_list = from_data.get("value", [{}] * len(to_list))
-                for from_item, to_item in zip(from_list, to_list):
-                    from_val = from_item.get("value")
-                    to_val = to_item.get("value")
-                    field_key = to_item.get("label", "Unknown field")
-                    if from_val != to_val:
-                        label = FIELD_LABELS.get(field_key, field_key)
-                        msg = STATIC_MESSAGES["field_updated"](label, from_val, to_val)
+            for from_item in from_value_list:
+                if not isinstance(from_item, dict) or "label" not in from_item:
+                    continue
 
-                        # Exclude unwanted messages
-                        if "Update Date" in msg or "Updated By" in msg:
-                            continue
+                field_key = from_item.get("label")
+                from_val = from_item.get("value")
+                to_val = to_data_map.get(field_key)
 
-                        history_entries.append({
-                            "Message": msg,
-                            "Date": log.dhs_dsm_insertdate,
-                            "Updated by": updated_by_name
-                        })
-            else:
-                for key, to_val in to_data.items():
-                    if key.lower() == "id":
-                        continue
-                    from_val = from_data.get(key)
-                    if from_val != to_val:
-                        label = FIELD_LABELS.get(key, key)
-                        msg = STATIC_MESSAGES["field_updated"](label, from_val, to_val)
+                if field_key in ["dem_updatedate", "dem_updateby_id"]:
+                    continue
 
-                        if "Update Date" in msg or "Updated By" in msg:
-                            continue
+                label_display = FIELD_LABELS.get(field_key, field_key)
+                msg = None
 
-                        history_entries.append({
-                            "Message": msg,
-                            "Date": log.dhs_dsm_insertdate,
-                            "Updated by": updated_by_name
-                        })
+                if field_key == "dem_jd":
+                    if from_val and to_val and from_val != to_val:
+                        msg = STATIC_MESSAGES["jd_updated"](to_val)
+                    elif not from_val and to_val:
+                        msg = STATIC_MESSAGES["jd_attached"](to_val)
+                elif from_val and to_val and from_val != to_val:
+                    msg = STATIC_MESSAGES["field_updated"](label_display, from_val, to_val)
+                elif not from_val and to_val:
+                    msg = STATIC_MESSAGES["field_set"](label_display, to_val)
+                elif from_val and not to_val:
+                    msg = STATIC_MESSAGES["field_cleared"](label_display, from_val)
 
-# (Candidate history loop remains similar, format its message keys as "Message", "Date", and "Updated by": None)
+                if msg:
+                    history_entries.append({
+                        "Message": msg,
+                        "Date": log.dhs_dsm_insertdate,
+                        "Updated by": current_updater
+                    })
 
         # --- Candidate Demand History Logs ---
         candidate_logs = CandidateDemandHistory.objects.filter(cdh_dem_id=demand_id).order_by('cdh_insertdate')
@@ -131,12 +121,20 @@ class DemandHistoryTrackingAPIView(APIView):
 
             if not from_status and to_status:
                 msg = STATIC_MESSAGES["candidate_linked"](candidate_name)
-                history_entries.append({"message": msg, "date": log.cdh_insertdate})
+                history_entries.append({
+                    "Message": msg,
+                    "Date": log.cdh_insertdate,
+                    "Updated by": None
+                })
                 continue
 
             if from_status and to_status and from_status != to_status:
                 msg = STATIC_MESSAGES["status_changed"](candidate_name, from_status, to_status)
-                history_entries.append({"message": msg, "date": log.cdh_insertdate})
+                history_entries.append({
+                    "Message": msg,
+                    "Date": log.cdh_insertdate,
+                    "Updated by": None
+                })
 
             ist_keys = lambda d: {k for k in d if k.startswith("ist_")}
             is_new_interview = bool(ist_keys(to_data)) and not bool(ist_keys(from_data))
@@ -152,7 +150,11 @@ class DemandHistoryTrackingAPIView(APIView):
                         to_data.get("ist_timezone") or "N/A",
                         to_data.get("ist_meeting_details") or "N/A"
                     )
-                    history_entries.append({"message": msg, "date": log.cdh_insertdate})
+                    history_entries.append({
+                        "Message": msg,
+                        "Date": log.cdh_insertdate,
+                        "Updated by": None
+                    })
                 else:
                     for field, label in INTERVIEW_LABELS.items():
                         from_val = from_data.get(field)
@@ -166,6 +168,10 @@ class DemandHistoryTrackingAPIView(APIView):
                                 to_val = get_enum_name(InterviewStatus, to_val)
 
                             msg = STATIC_MESSAGES["interview_field_updated"](label, candidate_name, from_val, to_val)
-                            history_entries.append({"message": msg, "date": log.cdh_insertdate})
+                            history_entries.append({
+                                "Message": msg,
+                                "Date": log.cdh_insertdate,
+                                "Updated by": None
+                            })
 
-        return Response(history_entries)
+        return Response(history_entries, status=status.HTTP_200_OK)
