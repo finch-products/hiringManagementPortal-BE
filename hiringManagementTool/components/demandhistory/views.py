@@ -86,8 +86,6 @@ class DemandHistoryTrackingAPIView(APIView):
                         msg = STATIC_MESSAGES["jd_attached"](to_val)
                 elif from_val and to_val and from_val != to_val:
                     msg = STATIC_MESSAGES["field_updated"](label_display, from_val, to_val)
-                elif from_val and not to_val:
-                    msg = STATIC_MESSAGES["field_cleared"](label_display, from_val)
 
                 if msg:
                     history_entries.append({
