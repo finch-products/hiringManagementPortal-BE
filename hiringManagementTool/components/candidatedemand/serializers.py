@@ -161,11 +161,11 @@ class CandidateMasterSerializer(serializers.ModelSerializer):
 
 class OpenDemandResponseSerializer(serializers.Serializer):
     cdl_dem_id = serializers.CharField()
-    candidate_count = serializers.SerializerMethodField()
+    application_count = serializers.SerializerMethodField()
     demand_details = DemandSerializer()
     candidates = CandidateSerializer(many=True)
 
-    def get_candidate_count(self, obj):
+    def get_application_count(self, obj):
         return len(obj['candidates']) 
 
 class NonlinkedResponseSerializer(serializers.Serializer):
