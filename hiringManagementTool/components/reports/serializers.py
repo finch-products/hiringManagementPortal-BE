@@ -48,6 +48,6 @@ class SkillDemandReportSerializer(serializers.Serializer):
     skill = serializers.CharField()
     demand_count = serializers.IntegerField()
     total_positions = serializers.IntegerField()
-    candidate_count = serializers.IntegerField()
+    candidate_submitted_count = serializers.IntegerField()
     total_candidates_with_skill = serializers.IntegerField()
     gap = serializers.IntegerField()
