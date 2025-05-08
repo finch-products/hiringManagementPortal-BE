@@ -58,26 +58,22 @@ class GetNonCandidatelistByDemandId(APIView):
 
 class CandidateDemandLinkAPIView(APIView):
     def post(self, request):
-        data = request.data  # Expecting a list of candidates under a demand
+        data = request.data
         
         if not isinstance(data, list):
             return Response({"error": "Expected a list of candidates"}, status=status.HTTP_400_BAD_REQUEST)
-
         if len(data) > 5:
             return Response({"error": "A demand can have up to 5 candidates"}, status=status.HTTP_400_BAD_REQUEST)
 
-         # Check if demand linking is allowed
-        if data and 'cdl_dem_id' in data[0]:  # Assuming each candidate data has a 'demand' field
-            demand_id = data[0]['cdl_dem_id']
-            try:
-                demand = OpenDemand.objects.select_related('dem_dsm_id').get(id=demand_id)
-                if demand.dem_dsm_id == 4 and demand.dem_dsm_id.dsm_inactive == 1:
-                    return Response({"error": "Cannot link candidates to an inactive demand"}, status=status.HTTP_400_BAD_REQUEST)
-            except OpenDemand.DoesNotExist:
-                return Response({"error": "Demand not found"}, status=status.HTTP_404_NOT_FOUND)
-            
+        demand_id = data[0].get('cdl_dem_id') if data else None
+        try:
+            demand = OpenDemand.objects.select_related('dem_dsm_id').get(dem_id=demand_id)
+            if demand.dem_dsm_id_id == 4 and getattr(demand.dem_dsm_id, 'dsm_inactive', 0) == 1:
+                return Response({"error": "Cannot link candidates to an inactive demand"}, status=status.HTTP_400_BAD_REQUEST)
+        except OpenDemand.DoesNotExist:
+            return Response({"error": "Demand not found"}, status=status.HTTP_404_NOT_FOUND)
+
         serializer = CandidateDemandLinkSerializer(data=data, many=True)
-        
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Candidates linked successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
@@ -86,15 +82,12 @@ class CandidateDemandLinkAPIView(APIView):
 
 class GetCandidatesDetailByDemandID(APIView):
     def post(self, request):
+        dem_id = request.data.get('dem_id')
+        if not dem_id:
+            return Response({"error": "dem_id is required"}, status=400)
+        
         try:
-            dem_id = request.data.get('dem_id')
-            if not dem_id:
-                return Response({"error": "dem_id is required"}, status=400)
-
-            serializer = CandidatesDetailbyDemIdSerializer()  # Initialize the serializer
-            result = serializer.get_candidates_by_demand(dem_id)
-
+            result = CandidatesDetailbyDemIdSerializer().get_candidates_by_demand(dem_id)
             return Response(result)
         except Exception as e:
-            # More specific error handling
             return Response({"error": str(e)}, status=500)

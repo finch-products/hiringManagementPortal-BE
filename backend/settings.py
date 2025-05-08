@@ -83,7 +83,7 @@ DATABASES = {
         'NAME': 'internalhiringtool',
         'USER': 'root',
         'PASSWORD': 'root',
-        'HOST': 'localhost',  # Changpe to MySQL server IP if remote
+        'HOST': '127.0.0.1',  # Changpe to MySQL server IP if remote
         'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
