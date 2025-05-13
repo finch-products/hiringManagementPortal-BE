@@ -94,14 +94,42 @@ class DemandDetailsSerializer(serializers.ModelSerializer):
     candidate_status_history = serializers.SerializerMethodField()
     demand_status_history = serializers.SerializerMethodField()
     current_demand_status = serializers.SerializerMethodField()
+    locations = serializers.SerializerMethodField() 
+    department = serializers.SerializerMethodField()
 
     class Meta:
         model = OpenDemand
         fields = [
             "dem_id", "dem_position_name", "dem_skillset", "dem_positions",
             "dem_rrnumber", "dem_jd", "dem_validtill", "dem_insertdate", "dem_updatedate",
-            "current_demand_status", "demand_status_history", "candidate_status_history"
+            "current_demand_status", "demand_status_history", "candidate_status_history","locations","department"
         ]
+
+    def get_department(self, obj):
+        """Method to get department details from InternalDepartmentMaster"""
+        if not obj.dem_idm_id:
+            return None
+        
+        return {
+            "id": obj.dem_idm_id.idm_id,
+            "name": obj.dem_idm_id.idm_unitname
+        }
+    def get_locations(self, obj):
+        """Method to get location details from LocationMaster"""
+        if not obj.dem_position_location:
+            return []
+        
+        # Get location objects from LocationMaster
+        locations = LocationMaster.objects.filter(lcm_id__in=obj.dem_position_location)
+        
+        # Return list of location dictionaries with id and name
+        return [{"lcm_id": loc.lcm_id, "lcm_name": loc.lcm_name} for loc in locations]
+
+    def to_representation(self, instance):
+        """Custom representation to include location details"""
+        data = super().to_representation(instance)
+        
+        return data
 
     def get_current_demand_status(self, obj):
         latest_status = DemandHistory.objects.filter(dhs_dem_id=obj.dem_id).order_by('-dhs_dsm_insertdate').first()
